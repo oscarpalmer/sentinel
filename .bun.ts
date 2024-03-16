@@ -3,7 +3,11 @@ import * as fs from 'fs/promises';
 const directory = String(__dirname).replace(/\\/g, '/');
 const isMjs = process.argv.includes('--mjs');
 
-async function getFiles(path: string): Promise<string[]> {
+async function getFiles(path: string | false): Promise<string[]> {
+	if (path === false) {
+		return ['./src/index.ts'];
+	}
+
 	const entries = await fs.readdir(path, {withFileTypes: true});
 
 	const files = entries
@@ -19,7 +23,7 @@ async function getFiles(path: string): Promise<string[]> {
 	return files;
 }
 
-getFiles('./src').then(async files => {
+getFiles(isMjs ? './src' : false).then(async files => {
 	for (const file of files) {
 		await Bun.build({
 			entrypoints: [`${directory}/${file}`],

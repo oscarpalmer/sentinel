@@ -4,12 +4,13 @@
 		"url": "https://oscarpalmer.se"
 	},
 	"dependencies": {
-		"@oscarpalmer/atoms": "0.30.0"
+		"@oscarpalmer/atoms": "0.31.0"
 	},
 	"description": "",
 	"devDependencies": {
 		"@biomejs/biome": "^1.6",
 		"@happy-dom/global-registrator": "^13.8",
+		"@types/bun": "^1.0",
 		"bun": "^1.0",
 		"typescript": "^5.4"
 	},
@@ -42,5 +43,5 @@
 	},
 	"type": "module",
 	"types": "./types/index.d.ts",
-	"version": "0.2.0"
+	"version": "0.3.0"
 }
