@@ -3,10 +3,13 @@
 		"name": "Oscar Palmér",
 		"url": "https://oscarpalmer.se"
 	},
-	"dependencies": {},
+	"dependencies": {
+		"@oscarpalmer/atoms": "0.30.0"
+	},
 	"description": "",
 	"devDependencies": {
 		"@biomejs/biome": "^1.6",
+		"@happy-dom/global-registrator": "^13.8",
 		"bun": "^1.0",
 		"typescript": "^5.4"
 	},
@@ -33,11 +36,11 @@
 	},
 	"scripts": {
 		"build": "bunx bun ./.bun.ts && bunx bun ./.bun.ts --mjs && bun run types",
-		"test": "bun test",
+		"test": "bun test --preload ./test/_preload.ts --coverage",
 		"types": "bunx tsc -p ./tsconfig.json",
 		"watch": "bun build ./src/index.ts --outfile ./dist/index.js --watch"
 	},
 	"type": "module",
 	"types": "./types/index.d.ts",
-	"version": "0.1.0"
+	"version": "0.2.0"
 }

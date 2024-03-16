@@ -17,10 +17,6 @@ class Sentinel {
 }
 
 // src/effect.ts
-function effect(callback) {
-  return new Effect(callback);
-}
-
 class Effect extends Sentinel {
   callback;
   values = new Set;
@@ -74,10 +70,10 @@ if (globalThis._atomic_effects === undefined) {
 
 // src/helpers.ts
 function getValue(value) {
-  const effect2 = globalThis._sentinels[globalThis._sentinels.length - 1];
-  if (effect2 != null) {
-    value.effects.add(effect2);
-    effect2.values.add(value);
+  const effect = globalThis._sentinels[globalThis._sentinels.length - 1];
+  if (effect != null) {
+    value.effects.add(effect);
+    effect.values.add(value);
   }
   return value._value;
 }
@@ -87,8 +83,8 @@ function setValue(reactive, value, run) {
   }
   reactive._value = value;
   if (reactive.active) {
-    for (const effect2 of reactive.effects) {
-      queue(effect2.callback);
+    for (const effect of reactive.effects) {
+      queue(effect.callback);
     }
   }
 }
@@ -133,54 +129,7 @@ class Computed extends ReactiveValue {
     this.effect.stop();
   }
 }
-// src/is.ts
-function isComputed(value) {
-  return isInstance(/^computed$/i, value);
-}
-function isEffect(value) {
-  return isInstance(/^effect$/i, value);
-}
-var isInstance = function(expression, value) {
-  return expression.test(value?.constructor?.name) && value.sentinel === true;
-};
-function isReactive(value) {
-  return isComputed(value) || isSignal(value);
-}
-function isSignal(value) {
-  return isInstance(/^signal$/i, value);
-}
-// src/signal.ts
-function signal(value) {
-  return new Signal(value);
-}
-
-class Signal extends ReactiveValue {
-  constructor() {
-    super(...arguments);
-  }
-  get value() {
-    return getValue(this);
-  }
-  set value(value) {
-    setValue(this, value, false);
-  }
-  run() {
-    if (this.active) {
-      return;
-    }
-    this.active = true;
-    setValue(this, this._value, true);
-  }
-  stop() {
-    this.active = false;
-  }
-}
 export {
-  signal,
-  isSignal,
-  isReactive,
-  isEffect,
-  isComputed,
-  effect,
-  computed
+  computed,
+  Computed
 };
