@@ -33,6 +33,13 @@ export class Signal<T = unknown> extends ReactiveValue<T> {
 	}
 
 	/**
+	 * Sets the value
+	 */
+	set(value: T): void {
+		setValue(this as never, value, true);
+	}
+
+	/**
 	 * Disables reactivity for the value, if it's running
 	 */
 	stop(): void {

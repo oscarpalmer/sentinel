@@ -16,6 +16,10 @@ export declare class Signal<T = unknown> extends ReactiveValue<T> {
      */
     run(): void;
     /**
+     * Sets the value
+     */
+    set(value: T): void;
+    /**
      * Disables reactivity for the value, if it's running
      */
     stop(): void;

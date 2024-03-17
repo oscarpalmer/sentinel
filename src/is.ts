@@ -1,20 +1,13 @@
 import type {Computed} from './computed';
-import type {Effect} from './effect';
 import type {InternalSentinel} from './models';
 import type {Signal} from './signal';
+import type {Watcher} from './watcher';
 
 /**
  * Is the value a computed, reactive value?
  */
 export function isComputed(value: unknown): value is Computed<unknown> {
 	return isInstance(/^computed$/i, value);
-}
-
-/**
- * Is the value a reactive effect?
- */
-export function isEffect(value: unknown): value is Effect {
-	return isInstance(/^effect$/i, value);
 }
 
 function isInstance(expression: RegExp, value: unknown): boolean {
@@ -38,4 +31,11 @@ export function isReactive(
  */
 export function isSignal(value: unknown): value is Signal<unknown> {
 	return isInstance(/^signal$/i, value);
+}
+
+/**
+ * Is the value a watcher?
+ */
+export function isWatcher(value: unknown): value is Watcher {
+	return isInstance(/^watcher$/i, value);
 }

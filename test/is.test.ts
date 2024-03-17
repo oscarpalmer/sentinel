@@ -1,12 +1,12 @@
 import {expect, test} from 'bun:test';
 import {
 	computed,
-	effect,
 	isComputed,
-	isEffect,
 	isReactive,
 	isSignal,
+	isWatcher,
 	signal,
+	watch,
 } from '../src';
 
 test('is', () => {
@@ -15,19 +15,19 @@ test('is', () => {
 	const sig = signal('isSignal');
 	const com = computed(() => `iScomputed: ${sig.value}!!!`);
 
-	const fx = effect(() => {
+	const w = watch(() => {
 		value += com.value;
 	});
 
 	expect(isComputed(com)).toBe(true);
-	expect(isEffect(fx)).toBe(true);
+	expect(isWatcher(w)).toBe(true);
 	expect(isSignal(sig)).toBe(true);
 
 	expect(isReactive(com)).toBe(true);
 	expect(isReactive(sig)).toBe(true);
-	expect(isReactive(fx)).toBe(false);
+	expect(isReactive(w)).toBe(false);
 
 	expect(isComputed(sig)).toBe(false);
-	expect(isEffect(com)).toBe(false);
-	expect(isSignal(fx)).toBe(false);
+	expect(isWatcher(com)).toBe(false);
+	expect(isSignal(w)).toBe(false);
 });

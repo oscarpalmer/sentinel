@@ -1,31 +1,31 @@
 declare global {
-	var _sentinels: InternalEffect[];
+	var _sentinels: InternalWatcher[];
 }
 
 if (globalThis._sentinels === undefined) {
-	const effects: InternalEffect[] = [];
+	const watchers: InternalWatcher[] = [];
 
 	Object.defineProperty(globalThis, '_sentinels', {
 		get() {
-			return effects;
+			return watchers;
 		},
 	});
 }
 
-export type InternalEffect = {
-	active: boolean;
-	callback: () => void;
-	values: Set<InternalReactiveValue>;
-};
-
-export type InternalReactiveValue = {
+export type InternalReactive = {
 	_value: unknown;
 	active: boolean;
-	effects: Set<InternalEffect>;
+	watchers: Set<InternalWatcher>;
 };
 
 export type InternalSentinel = {
 	sentinel: boolean;
+};
+
+export type InternalWatcher = {
+	active: boolean;
+	callback: () => void;
+	values: Set<InternalReactive>;
 };
 
 export abstract class Sentinel {

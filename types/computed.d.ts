@@ -4,9 +4,9 @@ import { ReactiveValue } from './reactive';
  */
 export declare class Computed<T = unknown> extends ReactiveValue<T> {
     /**
-     * Effect for computing value
+     * Watcher for computing the value
      */
-    private readonly effect;
+    private readonly watcher;
     /**
      * @inheritdoc
      */

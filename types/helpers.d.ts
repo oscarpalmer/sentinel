@@ -1,3 +1,3 @@
-import type { InternalReactiveValue } from './models';
-export declare function getValue(value: InternalReactiveValue): unknown;
-export declare function setValue(reactive: InternalReactiveValue, value: unknown, run: boolean): void;
+import type { InternalReactive } from './models';
+export declare function getValue(reactive: InternalReactive): unknown;
+export declare function setValue(reactive: InternalReactive, value: unknown, run: boolean): void;

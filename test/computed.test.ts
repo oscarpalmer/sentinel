@@ -7,6 +7,7 @@ test('computed', done => {
 	const second = signal('uted');
 	const third = computed(() => first.value + second.value);
 
+	expect(third.get()).toBe('computed');
 	expect(third.peek()).toBe('computed');
 
 	first.value += '!!!';

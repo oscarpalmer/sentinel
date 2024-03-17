@@ -1,19 +1,19 @@
 import {queue} from '@oscarpalmer/atoms/queue';
-import type {InternalReactiveValue} from './models';
+import type {InternalReactive} from './models';
 
-export function getValue(value: InternalReactiveValue): unknown {
-	const effect = globalThis._sentinels[globalThis._sentinels.length - 1];
+export function getValue(reactive: InternalReactive): unknown {
+	const watcher = globalThis._sentinels[globalThis._sentinels.length - 1];
 
-	if (effect != null) {
-		value.effects.add(effect);
-		effect.values.add(value);
+	if (watcher != null) {
+		reactive.watchers.add(watcher);
+		watcher.values.add(reactive);
 	}
 
-	return value._value;
+	return reactive._value;
 }
 
 export function setValue(
-	reactive: InternalReactiveValue,
+	reactive: InternalReactive,
 	value: unknown,
 	run: boolean,
 ): void {
@@ -24,8 +24,8 @@ export function setValue(
 	reactive._value = value;
 
 	if (reactive.active) {
-		for (const effect of reactive.effects) {
-			queue(effect.callback);
+		for (const watcher of reactive.watchers) {
+			queue(watcher.callback);
 		}
 	}
 }

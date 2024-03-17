@@ -1,18 +1,18 @@
 declare global {
-    var _sentinels: InternalEffect[];
+    var _sentinels: InternalWatcher[];
 }
-export type InternalEffect = {
-    active: boolean;
-    callback: () => void;
-    values: Set<InternalReactiveValue>;
-};
-export type InternalReactiveValue = {
+export type InternalReactive = {
     _value: unknown;
     active: boolean;
-    effects: Set<InternalEffect>;
+    watchers: Set<InternalWatcher>;
 };
 export type InternalSentinel = {
     sentinel: boolean;
+};
+export type InternalWatcher = {
+    active: boolean;
+    callback: () => void;
+    values: Set<InternalReactive>;
 };
 export declare abstract class Sentinel {
     protected active: boolean;
