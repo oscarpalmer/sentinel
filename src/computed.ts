@@ -22,7 +22,7 @@ export class Computed<T = unknown> extends ReactiveValue<T> {
 		super(undefined as never);
 
 		this.watcher = new Watcher(() =>
-			setValue(this as never, callback(), false),
+			setValue(this as never, callback()),
 		);
 	}
 

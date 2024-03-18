@@ -14,19 +14,18 @@ if (globalThis._sentinels === undefined) {
 
 export type InternalReactive = {
 	_value: unknown;
-	active: boolean;
 	watchers: Set<InternalWatcher>;
-};
+} & InternalSentinel;
 
 export type InternalSentinel = {
+	active: boolean;
 	sentinel: boolean;
 };
 
 export type InternalWatcher = {
-	active: boolean;
 	callback: () => void;
 	values: Set<InternalReactive>;
-};
+} & InternalSentinel;
 
 export abstract class Sentinel {
 	protected readonly sentinel = true;

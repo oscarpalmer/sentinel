@@ -73,6 +73,13 @@ if (globalThis._atomic_queued === undefined) {
 }
 
 // src/helpers.ts
+function emitValue(reactive) {
+  if (reactive.active) {
+    for (const watcher of reactive.watchers) {
+      queue(watcher.callback);
+    }
+  }
+}
 function getValue(reactive) {
   const watcher = globalThis._sentinels[globalThis._sentinels.length - 1];
   if (watcher != null) {
@@ -81,15 +88,27 @@ function getValue(reactive) {
   }
   return reactive._value;
 }
-function setValue(reactive, value, run) {
-  if (!run && Object.is(reactive._value, value)) {
+function setValue(reactive, value) {
+  if (Object.is(reactive._value, value)) {
     return;
   }
   reactive._value = value;
+  emitValue(reactive);
+}
+function startReactivity(reactive) {
   if (reactive.active) {
-    for (const watcher of reactive.watchers) {
-      queue(watcher.callback);
-    }
+    return;
+  }
+  reactive.active = true;
+  emitValue(reactive);
+}
+function stopReactivity(reactive) {
+  if (!reactive.active) {
+    return;
+  }
+  reactive.active = false;
+  for (const watcher of reactive.watchers) {
+    watcher.values.delete(reactive);
   }
 }
 
@@ -127,7 +146,7 @@ class Computed extends ReactiveValue {
   }
   constructor(callback) {
     super(undefined);
-    this.watcher = new Watcher(() => setValue(this, callback(), false));
+    this.watcher = new Watcher(() => setValue(this, callback()));
   }
   run() {
     this.watcher.start();
@@ -143,6 +162,9 @@ function isComputed(value) {
 var isInstance = function(expression, value) {
   return expression.test(value?.constructor?.name) && value.sentinel === true;
 };
+function isList(value) {
+  return isInstance(/^list$/i, value);
+}
 function isReactive(value) {
   return isComputed(value) || isSignal(value);
 }
@@ -151,6 +173,54 @@ function isSignal(value) {
 }
 function isWatcher(value) {
   return isInstance(/^watcher$/i, value);
+}
+// src/list.ts
+function list(value) {
+  return new List(value);
+}
+var operation = function(list2, array, operation2) {
+  return (...args) => {
+    const result = array[operation2](...args);
+    emitValue(list2);
+    return result;
+  };
+};
+var operations = new Set([
+  "copyWithin",
+  "fill",
+  "pop",
+  "push",
+  "reverse",
+  "shift",
+  "sort",
+  "splice",
+  "unshift"
+]);
+
+class List extends ReactiveValue {
+  get value() {
+    return getValue(this);
+  }
+  constructor(value) {
+    super(new Proxy(value, {
+      get: (target, property) => {
+        return operations.has(property) ? operation(this, target, property) : Reflect.get(target, property);
+      },
+      set: (target, property, value2) => {
+        const result = Reflect.set(target, property, value2);
+        if (result) {
+          emitValue(this);
+        }
+        return result;
+      }
+    }));
+  }
+  run() {
+    startReactivity(this);
+  }
+  stop() {
+    stopReactivity(this);
+  }
 }
 // src/signal.ts
 function signal(value) {
@@ -165,28 +235,26 @@ class Signal extends ReactiveValue {
     return getValue(this);
   }
   set value(value) {
-    setValue(this, value, false);
+    setValue(this, value);
   }
   run() {
-    if (this.active) {
-      return;
-    }
-    this.active = true;
-    setValue(this, this._value, true);
+    startReactivity(this);
   }
   set(value) {
-    setValue(this, value, true);
+    setValue(this, value);
   }
   stop() {
-    this.active = false;
+    stopReactivity(this);
   }
 }
 export {
   watch,
   signal,
+  list,
   isWatcher,
   isSignal,
   isReactive,
+  isList,
   isComputed,
   computed
 };

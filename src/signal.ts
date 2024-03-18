@@ -1,4 +1,4 @@
-import {getValue, setValue} from './helpers';
+import {getValue, setValue, startReactivity, stopReactivity} from './helpers';
 import {ReactiveValue} from './reactive';
 
 /**
@@ -16,34 +16,28 @@ export class Signal<T = unknown> extends ReactiveValue<T> {
 	 * @inheritdoc
 	 */
 	set value(value: T) {
-		setValue(this as never, value, false);
+		setValue(this as never, value);
 	}
 
 	/**
-	 * Enables reactivity for the value, if it was stopped
+	 * @inheritdoc
 	 */
 	run(): void {
-		if (this.active) {
-			return;
-		}
-
-		this.active = true;
-
-		setValue(this as never, this._value, true);
+		startReactivity(this as never);
 	}
 
 	/**
 	 * Sets the value
 	 */
 	set(value: T): void {
-		setValue(this as never, value, true);
+		setValue(this as never, value);
 	}
 
 	/**
-	 * Disables reactivity for the value, if it's running
+	 * @inheritdoc
 	 */
 	stop(): void {
-		this.active = false;
+		stopReactivity(this as never);
 	}
 }
 
