@@ -12,7 +12,7 @@ export declare class Signal<T = unknown> extends ReactiveValue<T> {
      */
     set value(value: T);
     /**
-     * Enables reactivity for the value, if it was stopped
+     * @inheritdoc
      */
     run(): void;
     /**
@@ -20,7 +20,7 @@ export declare class Signal<T = unknown> extends ReactiveValue<T> {
      */
     set(value: T): void;
     /**
-     * Disables reactivity for the value, if it's running
+     * @inheritdoc
      */
     stop(): void;
 }

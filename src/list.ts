@@ -1,5 +1,6 @@
 import {emitValue, getValue, startReactivity, stopReactivity} from './helpers';
 import {ReactiveValue} from './reactive';
+import {Signal} from './signal';
 
 /**
  * Array operations that should trigger reactivity
@@ -20,6 +21,22 @@ const operations = new Set([
  * A reactive list
  */
 class List<T> extends ReactiveValue<T[]> {
+	private readonly _length = new Signal(0);
+
+	/**
+	 * The length of the list
+	 */
+	get length(): number {
+		return this._length.value;
+	}
+
+	/**
+	 * Sets the length of the list
+	 */
+	set length(value: number) {
+		this._value.length = value < 0 ? 0 : value;
+	}
+
 	/**
 	 * @inheritdoc
 	 */
@@ -32,7 +49,7 @@ class List<T> extends ReactiveValue<T[]> {
 			new Proxy(value, {
 				get: (target, property) => {
 					return operations.has(property as never)
-						? operation(this as never, target, property as never)
+						? operation(this as never, this._length, target, property as never)
 						: Reflect.get(target, property);
 				},
 				set: (target, property, value) => {
@@ -46,6 +63,8 @@ class List<T> extends ReactiveValue<T[]> {
 				},
 			}),
 		);
+
+		this._length.value = value.length;
 	}
 
 	/**
@@ -72,6 +91,7 @@ export function list<T>(value: T[]) {
 
 function operation(
 	list: List<unknown>,
+	length: Signal<number>,
 	array: unknown[],
 	operation: string,
 ): unknown {
@@ -81,6 +101,8 @@ function operation(
 		)(...args);
 
 		emitValue(list as never);
+
+		length.set(array.length);
 
 		return result;
 	};

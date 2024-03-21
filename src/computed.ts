@@ -1,4 +1,4 @@
-import {Watcher} from './watcher';
+import {Effect} from './effect';
 import {getValue, setValue} from './helpers';
 import {ReactiveValue} from './reactive';
 
@@ -9,7 +9,7 @@ export class Computed<T = unknown> extends ReactiveValue<T> {
 	/**
 	 * Watcher for computing the value
 	 */
-	private readonly watcher: Watcher;
+	private readonly effect: Effect;
 
 	/**
 	 * @inheritdoc
@@ -21,7 +21,7 @@ export class Computed<T = unknown> extends ReactiveValue<T> {
 	constructor(callback: () => T) {
 		super(undefined as never);
 
-		this.watcher = new Watcher(() =>
+		this.effect = new Effect(() =>
 			setValue(this as never, callback()),
 		);
 	}
@@ -30,14 +30,14 @@ export class Computed<T = unknown> extends ReactiveValue<T> {
 	 * Enables reactivity, if it was stopped
 	 */
 	run(): void {
-		this.watcher.start();
+		this.effect.start();
 	}
 
 	/**
 	 * Disables reactivity, if it's running
 	 */
 	stop(): void {
-		this.watcher.stop();
+		this.effect.stop();
 	}
 }
 

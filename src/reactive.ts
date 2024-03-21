@@ -1,13 +1,13 @@
-import {type InternalWatcher, Sentinel} from './models';
+import {type InternalEffect, Sentinel} from './models';
 
 /**
  * Base class for a reactive value
  */
 export abstract class ReactiveValue<T = unknown> extends Sentinel {
 	/**
-	 * Watchers that have accessed the value
+	 * Effects that have accessed the value
 	 */
-	protected readonly watchers = new Set<InternalWatcher>();
+	protected readonly effects = new Set<InternalEffect>();
 
 	/**
 	 * The current value

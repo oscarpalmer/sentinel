@@ -1,13 +1,13 @@
 import {expect, test} from 'bun:test';
 import {wait} from '@oscarpalmer/atoms/timer';
-import {signal, watch} from '../src';
+import {effect, signal} from '../src';
 
 test('effect', done => {
 	let value: unknown = undefined;
 
 	const sig = signal('effect');
 
-	const w = watch(() => {
+	const fx = effect(() => {
 		value = sig.value;
 	});
 
@@ -18,14 +18,14 @@ test('effect', done => {
 	wait(() => {
 		expect(value).toBe('effect!');
 
-		w.stop();
+		fx.stop();
 
 		sig.value += '!';
 
 		wait(() => {
 			expect(value).toBe('effect!');
 
-			w.start();
+			fx.start();
 
 			wait(() => {
 				expect(value).toBe('effect!!');

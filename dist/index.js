@@ -1,9 +1,9 @@
 // src/models.ts
 if (globalThis._sentinels === undefined) {
-  const watchers = [];
+  const effects = [];
   Object.defineProperty(globalThis, "_sentinels", {
     get() {
-      return watchers;
+      return effects;
     }
   });
 }
@@ -16,12 +16,12 @@ class Sentinel {
   }
 }
 
-// src/watcher.ts
-function watch(callback) {
-  return new Watcher(callback);
+// src/effect.ts
+function effect(callback) {
+  return new Effect(callback);
 }
 
-class Watcher extends Sentinel {
+class Effect extends Sentinel {
   callback;
   values = new Set;
   constructor(callback) {
@@ -44,7 +44,7 @@ class Watcher extends Sentinel {
     }
     this.active = false;
     for (const value of this.values) {
-      value.watchers.delete(this);
+      value.effects.delete(this);
     }
     this.values.clear();
   }
@@ -75,16 +75,16 @@ if (globalThis._atomic_queued === undefined) {
 // src/helpers.ts
 function emitValue(reactive) {
   if (reactive.active) {
-    for (const watcher of reactive.watchers) {
-      queue(watcher.callback);
+    for (const effect2 of reactive.effects) {
+      queue(effect2.callback);
     }
   }
 }
 function getValue(reactive) {
-  const watcher = globalThis._sentinels[globalThis._sentinels.length - 1];
-  if (watcher != null) {
-    reactive.watchers.add(watcher);
-    watcher.values.add(reactive);
+  const effect2 = globalThis._sentinels[globalThis._sentinels.length - 1];
+  if (effect2 != null) {
+    reactive.effects.add(effect2);
+    effect2.values.add(reactive);
   }
   return reactive._value;
 }
@@ -107,15 +107,15 @@ function stopReactivity(reactive) {
     return;
   }
   reactive.active = false;
-  for (const watcher of reactive.watchers) {
-    watcher.values.delete(reactive);
+  for (const effect2 of reactive.effects) {
+    effect2.values.delete(reactive);
   }
 }
 
 // src/reactive.ts
 class ReactiveValue extends Sentinel {
   _value;
-  watchers = new Set;
+  effects = new Set;
   constructor(_value) {
     super(true);
     this._value = _value;
@@ -140,24 +140,27 @@ function computed(callback) {
 }
 
 class Computed extends ReactiveValue {
-  watcher;
+  effect;
   get value() {
     return getValue(this);
   }
   constructor(callback) {
     super(undefined);
-    this.watcher = new Watcher(() => setValue(this, callback()));
+    this.effect = new Effect(() => setValue(this, callback()));
   }
   run() {
-    this.watcher.start();
+    this.effect.start();
   }
   stop() {
-    this.watcher.stop();
+    this.effect.stop();
   }
 }
 // src/is.ts
 function isComputed(value) {
   return isInstance(/^computed$/i, value);
+}
+function isEffect(value) {
+  return isInstance(/^effect$/i, value);
 }
 var isInstance = function(expression, value) {
   return expression.test(value?.constructor?.name) && value.sentinel === true;
@@ -166,61 +169,10 @@ function isList(value) {
   return isInstance(/^list$/i, value);
 }
 function isReactive(value) {
-  return isComputed(value) || isSignal(value);
+  return isInstance(/^computed|list|signal$/i, value);
 }
 function isSignal(value) {
   return isInstance(/^signal$/i, value);
-}
-function isWatcher(value) {
-  return isInstance(/^watcher$/i, value);
-}
-// src/list.ts
-function list(value) {
-  return new List(value);
-}
-var operation = function(list2, array, operation2) {
-  return (...args) => {
-    const result = array[operation2](...args);
-    emitValue(list2);
-    return result;
-  };
-};
-var operations = new Set([
-  "copyWithin",
-  "fill",
-  "pop",
-  "push",
-  "reverse",
-  "shift",
-  "sort",
-  "splice",
-  "unshift"
-]);
-
-class List extends ReactiveValue {
-  get value() {
-    return getValue(this);
-  }
-  constructor(value) {
-    super(new Proxy(value, {
-      get: (target, property) => {
-        return operations.has(property) ? operation(this, target, property) : Reflect.get(target, property);
-      },
-      set: (target, property, value2) => {
-        const result = Reflect.set(target, property, value2);
-        if (result) {
-          emitValue(this);
-        }
-        return result;
-      }
-    }));
-  }
-  run() {
-    startReactivity(this);
-  }
-  stop() {
-    stopReactivity(this);
-  }
 }
 // src/signal.ts
 function signal(value) {
@@ -247,14 +199,72 @@ class Signal extends ReactiveValue {
     stopReactivity(this);
   }
 }
+
+// src/list.ts
+function list(value) {
+  return new List(value);
+}
+var operation = function(list2, length, array, operation2) {
+  return (...args) => {
+    const result = array[operation2](...args);
+    emitValue(list2);
+    length.set(array.length);
+    return result;
+  };
+};
+var operations = new Set([
+  "copyWithin",
+  "fill",
+  "pop",
+  "push",
+  "reverse",
+  "shift",
+  "sort",
+  "splice",
+  "unshift"
+]);
+
+class List extends ReactiveValue {
+  _length = new Signal(0);
+  get length() {
+    return this._length.value;
+  }
+  set length(value) {
+    this._value.length = value < 0 ? 0 : value;
+  }
+  get value() {
+    return getValue(this);
+  }
+  constructor(value) {
+    super(new Proxy(value, {
+      get: (target, property) => {
+        return operations.has(property) ? operation(this, this._length, target, property) : Reflect.get(target, property);
+      },
+      set: (target, property, value2) => {
+        const result = Reflect.set(target, property, value2);
+        if (result) {
+          emitValue(this);
+        }
+        return result;
+      }
+    }));
+    this._length.value = value.length;
+  }
+  run() {
+    startReactivity(this);
+  }
+  stop() {
+    stopReactivity(this);
+  }
+}
 export {
-  watch,
   signal,
   list,
-  isWatcher,
   isSignal,
   isReactive,
   isList,
+  isEffect,
   isComputed,
+  effect,
   computed
 };

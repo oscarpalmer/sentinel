@@ -1,11 +1,11 @@
 import {Sentinel, type InternalReactive} from './models';
 
 /**
- * Watches for changes in reactive values
+ * A reactive effect for changes in values
  */
-export class Watcher extends Sentinel {
+export class Effect extends Sentinel {
 	/**
-	 * Values accessed by the watcher
+	 * Values accessed by the effect
 	 */
 	private values = new Set<InternalReactive>();
 
@@ -16,7 +16,7 @@ export class Watcher extends Sentinel {
 	}
 
 	/**
-	 * Starts watching for changes
+	 * Starts reacting for changes
 	 */
 	start(): void {
 		if (this.active) {
@@ -33,7 +33,7 @@ export class Watcher extends Sentinel {
 	}
 
 	/**
-	 * Stops watching for changes
+	 * Stops reacting for changes
 	 */
 	stop(): void {
 		if (!this.active) {
@@ -43,7 +43,7 @@ export class Watcher extends Sentinel {
 		this.active = false;
 
 		for (const value of this.values) {
-			value.watchers.delete(this as never);
+			value.effects.delete(this as never);
 		}
 
 		this.values.clear();
@@ -51,8 +51,8 @@ export class Watcher extends Sentinel {
 }
 
 /**
- * Creates a watcher
+ * Creates a reactive effect
  */
-export function watch(callback: () => void): Watcher {
-	return new Watcher(callback);
+export function effect(callback: () => void): Effect {
+	return new Effect(callback);
 }

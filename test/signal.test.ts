@@ -1,6 +1,6 @@
 import {expect, test} from 'bun:test';
 import {wait} from '@oscarpalmer/atoms/timer';
-import {signal, watch} from '../src';
+import {effect, signal} from '../src';
 
 test('signal', done => {
 	const sig = signal('signal');
@@ -13,7 +13,7 @@ test('signal', done => {
 
 	let value: unknown = undefined;
 
-	watch(() => {
+	effect(() => {
 		value = sig.value;
 	});
 

@@ -6,7 +6,7 @@ export declare class Computed<T = unknown> extends ReactiveValue<T> {
     /**
      * Watcher for computing the value
      */
-    private readonly watcher;
+    private readonly effect;
     /**
      * @inheritdoc
      */
