@@ -10,11 +10,11 @@ export declare class Effect extends Sentinel {
     private values;
     constructor(callback: () => void);
     /**
-     * Starts reacting for changes
+     * Starts reacting to changes
      */
     start(): void;
     /**
-     * Stops reacting for changes
+     * Stops reacting to changes
      */
     stop(): void;
 }

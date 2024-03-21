@@ -1,5 +1,5 @@
-import {emitValue, getValue, startReactivity, stopReactivity} from './helpers';
-import {ReactiveValue} from './reactive';
+import {emitValue, getValue, setProxyValue} from './helpers';
+import {Reactive} from './reactive';
 import {Signal} from './signal';
 
 /**
@@ -20,7 +20,7 @@ const operations = new Set([
 /**
  * A reactive list
  */
-class List<T> extends ReactiveValue<T[]> {
+export class List<T> extends Reactive<T[]> {
 	private readonly _length = new Signal(0);
 
 	/**
@@ -31,17 +31,17 @@ class List<T> extends ReactiveValue<T[]> {
 	}
 
 	/**
-	 * Sets the length of the list
-	 */
-	set length(value: number) {
-		this._value.length = value < 0 ? 0 : value;
-	}
-
-	/**
 	 * @inheritdoc
 	 */
 	get value(): T[] {
 		return getValue(this as never) as T[];
+	}
+
+	/**
+	 * Sets the length of the list
+	 */
+	set length(value: number) {
+		this._value.length = value < 0 ? 0 : value;
 	}
 
 	constructor(value: T[]) {
@@ -52,33 +52,12 @@ class List<T> extends ReactiveValue<T[]> {
 						? operation(this as never, this._length, target, property as never)
 						: Reflect.get(target, property);
 				},
-				set: (target, property, value) => {
-					const result = Reflect.set(target, property, value);
-
-					if (result) {
-						emitValue(this as never);
-					}
-
-					return result;
-				},
+				set: (target, property, value) =>
+					setProxyValue(this as never, target, property, value),
 			}),
 		);
 
 		this._length.value = value.length;
-	}
-
-	/**
-	 * @inheritdoc
-	 */
-	run(): void {
-		startReactivity(this as never);
-	}
-
-	/**
-	 * @inheritdoc
-	 */
-	stop(): void {
-		stopReactivity(this as never);
 	}
 }
 
@@ -107,5 +86,3 @@ function operation(
 		return result;
 	};
 }
-
-export type {List};

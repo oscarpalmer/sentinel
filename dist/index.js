@@ -88,19 +88,30 @@ function getValue(reactive) {
   }
   return reactive._value;
 }
-function setValue(reactive, value) {
-  if (Object.is(reactive._value, value)) {
-    return;
-  }
-  reactive._value = value;
+var setAndEmit = function(reactive, key, value) {
+  reactive[key] = value;
   emitValue(reactive);
+};
+function setProxyValue(reactive, target, property, value) {
+  const previous = Reflect.get(target, property);
+  if (Object.is(previous, value)) {
+    return true;
+  }
+  const result = Reflect.set(target, property, value);
+  if (result) {
+    emitValue(reactive);
+  }
+  return result;
+}
+function setValue(reactive, value) {
+  if (!Object.is(reactive._value, value)) {
+    setAndEmit(reactive, "_value", value);
+  }
 }
 function startReactivity(reactive) {
-  if (reactive.active) {
-    return;
+  if (!reactive.active) {
+    setAndEmit(reactive, "active", true);
   }
-  reactive.active = true;
-  emitValue(reactive);
 }
 function stopReactivity(reactive) {
   if (!reactive.active) {
@@ -113,7 +124,7 @@ function stopReactivity(reactive) {
 }
 
 // src/reactive.ts
-class ReactiveValue extends Sentinel {
+class Reactive extends Sentinel {
   _value;
   effects = new Set;
   constructor(_value) {
@@ -125,6 +136,12 @@ class ReactiveValue extends Sentinel {
   }
   peek() {
     return this._value;
+  }
+  run() {
+    startReactivity(this);
+  }
+  stop() {
+    stopReactivity(this);
   }
   toJSON() {
     return this.value;
@@ -139,11 +156,11 @@ function computed(callback) {
   return new Computed(callback);
 }
 
-class Computed extends ReactiveValue {
-  effect;
+class Computed extends Reactive {
   get value() {
     return getValue(this);
   }
+  effect;
   constructor(callback) {
     super(undefined);
     this.effect = new Effect(() => setValue(this, callback()));
@@ -169,17 +186,41 @@ function isList(value) {
   return isInstance(/^list$/i, value);
 }
 function isReactive(value) {
-  return isInstance(/^computed|list|signal$/i, value);
+  return isInstance(/^computed|item|list|signal$/i, value);
 }
 function isSignal(value) {
   return isInstance(/^signal$/i, value);
+}
+// src/item.ts
+function item(value) {
+  return new Item(value);
+}
+
+class Item extends Reactive {
+  get value() {
+    return getValue(this);
+  }
+  constructor(value) {
+    super(new Proxy(value, {
+      set: (target, property, value2) => setProxyValue(this, target, property, value2)
+    }));
+  }
+  get(property) {
+    return property == null ? getValue(this) : this.value[property];
+  }
+  peek(property) {
+    return property == null ? this._value : this._value[property];
+  }
+  set(property, value) {
+    this._value[property] = value;
+  }
 }
 // src/signal.ts
 function signal(value) {
   return new Signal(value);
 }
 
-class Signal extends ReactiveValue {
+class Signal extends Reactive {
   constructor() {
     super(...arguments);
   }
@@ -189,14 +230,8 @@ class Signal extends ReactiveValue {
   set value(value) {
     setValue(this, value);
   }
-  run() {
-    startReactivity(this);
-  }
   set(value) {
     setValue(this, value);
-  }
-  stop() {
-    stopReactivity(this);
   }
 }
 
@@ -224,42 +259,31 @@ var operations = new Set([
   "unshift"
 ]);
 
-class List extends ReactiveValue {
+class List extends Reactive {
   _length = new Signal(0);
   get length() {
     return this._length.value;
   }
-  set length(value) {
-    this._value.length = value < 0 ? 0 : value;
-  }
   get value() {
     return getValue(this);
+  }
+  set length(value) {
+    this._value.length = value < 0 ? 0 : value;
   }
   constructor(value) {
     super(new Proxy(value, {
       get: (target, property) => {
         return operations.has(property) ? operation(this, this._length, target, property) : Reflect.get(target, property);
       },
-      set: (target, property, value2) => {
-        const result = Reflect.set(target, property, value2);
-        if (result) {
-          emitValue(this);
-        }
-        return result;
-      }
+      set: (target, property, value2) => setProxyValue(this, target, property, value2)
     }));
     this._length.value = value.length;
-  }
-  run() {
-    startReactivity(this);
-  }
-  stop() {
-    stopReactivity(this);
   }
 }
 export {
   signal,
   list,
+  item,
   isSignal,
   isReactive,
   isList,

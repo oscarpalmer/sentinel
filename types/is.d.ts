@@ -1,5 +1,7 @@
+import type { PlainObject } from '@oscarpalmer/atoms/is';
 import type { Computed } from './computed';
 import type { Effect } from './effect';
+import type { Item } from './item';
 import type { List } from './list';
 import type { Signal } from './signal';
 /**
@@ -10,6 +12,7 @@ export declare function isComputed(value: unknown): value is Computed<unknown>;
  * Is the value a reactive effect?
  */
 export declare function isEffect(value: unknown): value is Effect;
+export declare function isItem(value: unknown): value is Item<PlainObject>;
 export declare function isList(value: unknown): value is List<unknown>;
 /**
  * Is the value a reactive value?

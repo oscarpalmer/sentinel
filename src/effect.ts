@@ -16,7 +16,7 @@ export class Effect extends Sentinel {
 	}
 
 	/**
-	 * Starts reacting for changes
+	 * Starts reacting to changes
 	 */
 	start(): void {
 		if (this.active) {
@@ -33,7 +33,7 @@ export class Effect extends Sentinel {
 	}
 
 	/**
-	 * Stops reacting for changes
+	 * Stops reacting to changes
 	 */
 	stop(): void {
 		if (!this.active) {

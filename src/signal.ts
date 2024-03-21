@@ -1,10 +1,10 @@
-import {getValue, setValue, startReactivity, stopReactivity} from './helpers';
-import {ReactiveValue} from './reactive';
+import {getValue, setValue} from './helpers';
+import {Reactive} from './reactive';
 
 /**
  * A reactive value
  */
-export class Signal<T = unknown> extends ReactiveValue<T> {
+export class Signal<T> extends Reactive<T> {
 	/**
 	 * @inheritdoc
 	 */
@@ -20,30 +20,16 @@ export class Signal<T = unknown> extends ReactiveValue<T> {
 	}
 
 	/**
-	 * @inheritdoc
-	 */
-	run(): void {
-		startReactivity(this as never);
-	}
-
-	/**
 	 * Sets the value
 	 */
 	set(value: T): void {
 		setValue(this as never, value);
-	}
-
-	/**
-	 * @inheritdoc
-	 */
-	stop(): void {
-		stopReactivity(this as never);
 	}
 }
 
 /**
  * Creates a reactive value
  */
-export function signal<T = unknown>(value: T): Signal<T> {
+export function signal<T>(value: T): Signal<T> {
 	return new Signal(value);
 }

@@ -1,3 +1,4 @@
+import type {ArrayOrPlainObject} from '@oscarpalmer/atoms/is';
 import {queue} from '@oscarpalmer/atoms/queue';
 import type {InternalReactive} from './models';
 
@@ -10,8 +11,7 @@ export function emitValue(reactive: InternalReactive): void {
 }
 
 export function getValue(reactive: InternalReactive): unknown {
-	const effect =
-		globalThis._sentinels[globalThis._sentinels.length - 1];
+	const effect = globalThis._sentinels[globalThis._sentinels.length - 1];
 
 	if (effect != null) {
 		reactive.effects.add(effect);
@@ -21,24 +21,47 @@ export function getValue(reactive: InternalReactive): unknown {
 	return reactive._value;
 }
 
-export function setValue(reactive: InternalReactive, value: unknown): void {
-	if (Object.is(reactive._value, value)) {
-		return;
-	}
-
-	reactive._value = value;
+function setAndEmit(
+	reactive: InternalReactive,
+	key: '_value' | 'active',
+	value: unknown,
+): void {
+	reactive[key] = value as never;
 
 	emitValue(reactive);
 }
 
-export function startReactivity(reactive: InternalReactive): void {
-	if (reactive.active) {
-		return;
+export function setProxyValue(
+	reactive: InternalReactive,
+	target: ArrayOrPlainObject,
+	property: PropertyKey,
+	value: unknown,
+): boolean {
+	const previous = Reflect.get(target, property);
+
+	if (Object.is(previous, value)) {
+		return true;
 	}
 
-	reactive.active = true;
+	const result = Reflect.set(target, property, value);
 
-	emitValue(reactive);
+	if (result) {
+		emitValue(reactive as InternalReactive);
+	}
+
+	return result;
+}
+
+export function setValue(reactive: InternalReactive, value: unknown): void {
+	if (!Object.is(reactive._value, value)) {
+		setAndEmit(reactive, '_value', value);
+	}
+}
+
+export function startReactivity(reactive: InternalReactive): void {
+	if (!reactive.active) {
+		setAndEmit(reactive, 'active', true);
+	}
 }
 
 export function stopReactivity(reactive: InternalReactive): void {

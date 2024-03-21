@@ -1,5 +1,7 @@
+import type {PlainObject} from '@oscarpalmer/atoms/is';
 import type {Computed} from './computed';
 import type {Effect} from './effect';
+import type {Item} from './item';
 import type {List} from './list';
 import type {InternalSentinel} from './models';
 import type {Signal} from './signal';
@@ -25,6 +27,10 @@ function isInstance(expression: RegExp, value: unknown): boolean {
 	);
 }
 
+export function isItem(value: unknown): value is Item<PlainObject> {
+	return isInstance(/^item$/i, value);
+}
+
 export function isList(value: unknown): value is List<unknown> {
 	return isInstance(/^list$/i, value);
 }
@@ -35,7 +41,7 @@ export function isList(value: unknown): value is List<unknown> {
 export function isReactive(
 	value: unknown,
 ): value is Computed<unknown> | List<unknown> | Signal<unknown> {
-	return isInstance(/^computed|list|signal$/i, value);
+	return isInstance(/^computed|item|list|signal$/i, value);
 }
 
 /**

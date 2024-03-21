@@ -1,8 +1,8 @@
-import { ReactiveValue } from './reactive';
+import { Reactive } from './reactive';
 /**
  * A reactive value
  */
-export declare class Signal<T = unknown> extends ReactiveValue<T> {
+export declare class Signal<T> extends Reactive<T> {
     /**
      * @inheritdoc
      */
@@ -12,19 +12,11 @@ export declare class Signal<T = unknown> extends ReactiveValue<T> {
      */
     set value(value: T);
     /**
-     * @inheritdoc
-     */
-    run(): void;
-    /**
      * Sets the value
      */
     set(value: T): void;
-    /**
-     * @inheritdoc
-     */
-    stop(): void;
 }
 /**
  * Creates a reactive value
  */
-export declare function signal<T = unknown>(value: T): Signal<T>;
+export declare function signal<T>(value: T): Signal<T>;

@@ -1,23 +1,23 @@
-import { ReactiveValue } from './reactive';
+import { Reactive } from './reactive';
 /**
  * A computed, reactive value
  */
-export declare class Computed<T = unknown> extends ReactiveValue<T> {
-    /**
-     * Watcher for computing the value
-     */
-    private readonly effect;
+export declare class Computed<T> extends Reactive<T> {
     /**
      * @inheritdoc
      */
     get value(): T;
+    /**
+     * Effect for computing the value
+     */
+    private readonly effect;
     constructor(callback: () => T);
     /**
-     * Enables reactivity, if it was stopped
+     * @inheritdoc
      */
     run(): void;
     /**
-     * Disables reactivity, if it's running
+     * @inheritdoc
      */
     stop(): void;
 }

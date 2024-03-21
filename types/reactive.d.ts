@@ -2,7 +2,7 @@ import { type InternalEffect, Sentinel } from './models';
 /**
  * Base class for a reactive value
  */
-export declare abstract class ReactiveValue<T = unknown> extends Sentinel {
+export declare abstract class Reactive<T> extends Sentinel {
     protected _value: T;
     /**
      * Effects that have accessed the value
@@ -24,11 +24,11 @@ export declare abstract class ReactiveValue<T = unknown> extends Sentinel {
     /**
      * Enables reactivity for the value, if it was stopped
      */
-    abstract run(): void;
+    run(): void;
     /**
      * Disables reactivity for the value, if it's running
      */
-    abstract stop(): void;
+    stop(): void;
     /**
      * Get the JSON representation of the value
      */
