@@ -1,17 +1,17 @@
-import { Reactive } from './reactive';
+import { ReactiveValue } from './reactive';
 /**
  * A computed, reactive value
  */
-export declare class Computed<T> extends Reactive<T> {
+export declare class Computed<Value> extends ReactiveValue<Value> {
     /**
      * @inheritdoc
      */
-    get value(): T;
+    get value(): Value;
     /**
      * Effect for computing the value
      */
     private readonly effect;
-    constructor(callback: () => T);
+    constructor(callback: () => Value);
     /**
      * @inheritdoc
      */
@@ -24,4 +24,4 @@ export declare class Computed<T> extends Reactive<T> {
 /**
  * Creates a computed, reactive value
  */
-export declare function computed<T>(callback: () => T): Computed<T>;
+export declare function computed<Value>(callback: () => Value): Computed<Value>;

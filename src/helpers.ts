@@ -1,6 +1,7 @@
 import type {ArrayOrPlainObject} from '@oscarpalmer/atoms/is';
 import {queue} from '@oscarpalmer/atoms/queue';
 import type {InternalReactive} from './models';
+import type {Signal} from './signal';
 
 export function emitValue(reactive: InternalReactive): void {
 	if (reactive.active) {
@@ -34,6 +35,7 @@ function setAndEmit(
 export function setProxyValue(
 	reactive: InternalReactive,
 	target: ArrayOrPlainObject,
+	length: Signal<number> | undefined,
 	property: PropertyKey,
 	value: unknown,
 ): boolean {
@@ -47,6 +49,10 @@ export function setProxyValue(
 
 	if (result) {
 		emitValue(reactive as InternalReactive);
+
+		if (Array.isArray(target)) {
+			length?.set(target.length);
+		}
 	}
 
 	return result;

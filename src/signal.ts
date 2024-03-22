@@ -1,28 +1,28 @@
 import {getValue, setValue} from './helpers';
-import {Reactive} from './reactive';
+import {ReactiveValue} from './reactive';
 
 /**
  * A reactive value
  */
-export class Signal<T> extends Reactive<T> {
+export class Signal<Value> extends ReactiveValue<Value> {
 	/**
 	 * @inheritdoc
 	 */
-	get value(): T {
-		return getValue(this as never) as T;
+	get value(): Value {
+		return getValue(this as never) as Value;
 	}
 
 	/**
 	 * @inheritdoc
 	 */
-	set value(value: T) {
+	set value(value: Value) {
 		setValue(this as never, value);
 	}
 
 	/**
 	 * Sets the value
 	 */
-	set(value: T): void {
+	set(value: Value): void {
 		setValue(this as never, value);
 	}
 }
@@ -30,6 +30,6 @@ export class Signal<T> extends Reactive<T> {
 /**
  * Creates a reactive value
  */
-export function signal<T>(value: T): Signal<T> {
+export function signal<Value>(value: Value): Signal<Value> {
 	return new Signal(value);
 }

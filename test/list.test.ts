@@ -24,6 +24,7 @@ test('list', done => {
 	arr.value.push(4);
 
 	wait(() => {
+		expect(arr.at(-1)).toBe(4);
 		expect(value).toBe('[1,2,3]');
 
 		arr.run();
@@ -36,12 +37,18 @@ test('list', done => {
 			wait(() => {
 				expect(value).toBe('[1,2,3,4,null]');
 
-				arr.length = -99;
+				arr.set(4, 5);
 
 				wait(() => {
-					expect(value).toBe('[]');
+					expect(value).toBe('[1,2,3,4,5]');
 
-					done();
+					arr.length = -99;
+
+					wait(() => {
+						expect(value).toBe('[]');
+
+						done();
+					});
 				});
 			});
 		});

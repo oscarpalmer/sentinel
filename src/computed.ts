@@ -1,16 +1,16 @@
 import {Effect} from './effect';
 import {getValue, setValue} from './helpers';
-import {Reactive} from './reactive';
+import {ReactiveValue} from './reactive';
 
 /**
  * A computed, reactive value
  */
-export class Computed<T> extends Reactive<T> {
+export class Computed<Value> extends ReactiveValue<Value> {
 	/**
 	 * @inheritdoc
 	 */
-	get value(): T {
-		return getValue(this as never) as T;
+	get value(): Value {
+		return getValue(this as never) as Value;
 	}
 
 	/**
@@ -18,7 +18,7 @@ export class Computed<T> extends Reactive<T> {
 	 */
 	private readonly effect: Effect;
 
-	constructor(callback: () => T) {
+	constructor(callback: () => Value) {
 		super(undefined as never);
 
 		this.effect = new Effect(() => setValue(this as never, callback()));
@@ -42,6 +42,6 @@ export class Computed<T> extends Reactive<T> {
 /**
  * Creates a computed, reactive value
  */
-export function computed<T>(callback: () => T): Computed<T> {
+export function computed<Value>(callback: () => Value): Computed<Value> {
 	return new Computed(callback);
 }

@@ -1,8 +1,8 @@
-import { Reactive } from './reactive';
+import { ReactiveObject } from './reactive';
 /**
  * A reactive list
  */
-export declare class List<T> extends Reactive<T[]> {
+export declare class List<Value> extends ReactiveObject<Value[]> {
     private readonly _length;
     /**
      * The length of the list
@@ -11,14 +11,18 @@ export declare class List<T> extends Reactive<T[]> {
     /**
      * @inheritdoc
      */
-    get value(): T[];
+    get value(): Value[];
     /**
      * Sets the length of the list
      */
     set length(value: number);
-    constructor(value: T[]);
+    constructor(value: Value[]);
+    /**
+     * Gets the value at the specified index
+     */
+    at(index: number): Value | undefined;
 }
 /**
  * Creates a reactive list
  */
-export declare function list<T>(value: T[]): List<T>;
+export declare function list<Value>(value: Value[]): List<Value>;
