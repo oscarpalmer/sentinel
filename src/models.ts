@@ -20,4 +20,4 @@ export abstract class Sentinel {
 	) {}
 }
 
-export type SentinelType = 'computed' | 'effect' | 'item' | 'list' | 'signal';
+export type SentinelType = 'computed' | 'effect' | 'list' | 'signal' | 'store';

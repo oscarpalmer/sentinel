@@ -15,4 +15,4 @@ export declare abstract class Sentinel {
     protected active: boolean;
     constructor(type: SentinelType, active: boolean);
 }
-export type SentinelType = 'computed' | 'effect' | 'item' | 'list' | 'signal';
+export type SentinelType = 'computed' | 'effect' | 'list' | 'signal' | 'store';

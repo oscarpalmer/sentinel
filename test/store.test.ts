@@ -1,13 +1,13 @@
 import {expect, test} from 'bun:test';
 import {wait} from '@oscarpalmer/atoms/timer';
-import {effect, item} from '../src';
+import {effect, store} from '../src';
 
 type Data = {
 	key: string;
 };
 
-test('item', done => {
-	const obj = item<Data>({key: 'value'});
+test('store', done => {
+	const obj = store<Data>({key: 'value'});
 
 	let keyValue = '?';
 

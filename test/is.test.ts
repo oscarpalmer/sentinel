@@ -4,13 +4,13 @@ import {
 	effect,
 	isComputed,
 	isEffect,
-	isItem,
 	isList,
 	isReactive,
 	isSignal,
-	item,
+	isStore,
 	list,
 	signal,
+	store,
 } from '../src';
 
 test('is', () => {
@@ -19,7 +19,7 @@ test('is', () => {
 	const sig = signal('isSignal');
 	const com = computed(() => `isComputed: ${sig.value}!!!`);
 	const arr = list([1, 2, 3]);
-	const obj = item({key: 'value'});
+	const obj = store({key: 'value'});
 
 	const fx = effect(() => {
 		value += com.value;
@@ -27,9 +27,9 @@ test('is', () => {
 
 	expect(isComputed(com)).toBe(true);
 	expect(isEffect(fx)).toBe(true);
-	expect(isItem(obj)).toBe(true);
 	expect(isList(arr)).toBe(true);
 	expect(isSignal(sig)).toBe(true);
+	expect(isStore(obj)).toBe(true);
 
 	expect(isReactive(com)).toBe(true);
 	expect(isReactive(sig)).toBe(true);

@@ -1,4 +1,4 @@
-import { ReactiveValue } from '.';
+import { ReactiveValue } from './value';
 /**
  * A computed, reactive value
  */

@@ -1,5 +1,6 @@
-import {emitValue, getValue, setProxyValue} from '../helpers';
-import {ReactiveObject} from '.';
+import {emit} from '../helpers/event';
+import {getValue, setProxyValue} from '../helpers/value';
+import {ReactiveObject} from './object';
 import {Signal} from './signal';
 
 /**
@@ -87,7 +88,7 @@ function operation(
 			array[operation as never] as (...args: unknown[]) => unknown
 		)(...args);
 
-		emitValue(list as never);
+		emit(list as never);
 
 		length.set(array.length);
 

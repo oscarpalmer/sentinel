@@ -1,4 +1,4 @@
-import { ReactiveObject } from '.';
+import { ReactiveObject } from './object';
 /**
  * A reactive list
  */
