@@ -1,6 +1,3 @@
-declare global {
-    var _sentinels: InternalEffect[];
-}
 export type InternalEffect = {
     callback: () => void;
     values: Set<InternalReactive>;

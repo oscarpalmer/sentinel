@@ -1,7 +1,7 @@
 import type {ArrayOrPlainObject} from '@oscarpalmer/atoms/is';
 import {queue} from '@oscarpalmer/atoms/queue';
-import type {InternalReactive} from './models';
-import type {Signal} from './signal';
+import type {InternalReactive} from '../models';
+import type {Signal} from '../reactive/signal';
 
 export function emitValue(reactive: InternalReactive): void {
 	if (reactive.active) {

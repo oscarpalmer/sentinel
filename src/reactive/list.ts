@@ -1,5 +1,5 @@
-import {emitValue, getValue, setProxyValue} from './helpers';
-import {ReactiveObject} from './reactive';
+import {emitValue, getValue, setProxyValue} from '../helpers';
+import {ReactiveObject} from '.';
 import {Signal} from './signal';
 
 /**

@@ -1,6 +1,6 @@
-import {Effect} from './effect';
-import {getValue, setValue} from './helpers';
-import {ReactiveValue} from './reactive';
+import {Effect} from '../effect';
+import {getValue, setValue} from '../helpers';
+import {ReactiveValue} from '.';
 
 /**
  * A computed, reactive value

@@ -1,6 +1,6 @@
 import type {PlainObject} from '@oscarpalmer/atoms/is';
-import {setProxyValue} from './helpers';
-import {ReactiveObject} from './reactive';
+import {setProxyValue} from '../helpers';
+import {ReactiveObject} from '.';
 
 /**
  * A reactive item

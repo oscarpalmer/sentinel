@@ -4,6 +4,7 @@ import {
 	effect,
 	isComputed,
 	isEffect,
+	isItem,
 	isList,
 	isReactive,
 	isSignal,
@@ -11,7 +12,6 @@ import {
 	list,
 	signal,
 } from '../src';
-import {isItem} from '../src/is';
 
 test('is', () => {
 	let value = '';

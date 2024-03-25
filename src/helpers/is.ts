@@ -1,10 +1,10 @@
 import type {PlainObject} from '@oscarpalmer/atoms/is';
-import type {Computed} from './computed';
-import type {Effect} from './effect';
-import type {Item} from './item';
-import type {List} from './list';
-import type {InternalSentinel} from './models';
-import type {Signal} from './signal';
+import type {Computed} from '../reactive/computed';
+import type {Effect} from '../effect';
+import type {Item} from '../reactive/item';
+import type {List} from '../reactive/list';
+import type {InternalSentinel} from '../models';
+import type {Signal} from '../reactive/signal';
 
 /**
  * Is the value a computed, reactive value?

@@ -1,5 +1,5 @@
-import {getValue, setValue} from './helpers';
-import {ReactiveValue} from './reactive';
+import {getValue, setValue} from '../helpers';
+import {ReactiveValue} from '.';
 
 /**
  * A reactive value

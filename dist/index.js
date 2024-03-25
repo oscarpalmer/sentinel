@@ -1,4 +1,4 @@
-// src/models.ts
+// src/global.ts
 if (globalThis._sentinels === undefined) {
   const effects = [];
   Object.defineProperty(globalThis, "_sentinels", {
@@ -8,6 +8,7 @@ if (globalThis._sentinels === undefined) {
   });
 }
 
+// src/models.ts
 class Sentinel {
   type;
   active;
@@ -73,7 +74,7 @@ if (globalThis._atomic_queued === undefined) {
   });
 }
 
-// src/helpers.ts
+// src/helpers/index.ts
 function emitValue(reactive) {
   if (reactive.active) {
     for (const effect2 of reactive.effects) {
@@ -127,7 +128,7 @@ function stopReactivity(reactive) {
   }
 }
 
-// src/reactive.ts
+// src/reactive/index.ts
 class ReactiveValue extends Sentinel {
   _value;
   effects = new Set;
@@ -173,7 +174,7 @@ class ReactiveObject extends ReactiveValue {
   }
 }
 
-// src/computed.ts
+// src/reactive/computed.ts
 function computed(callback) {
   return new Computed(callback);
 }
@@ -194,7 +195,7 @@ class Computed extends ReactiveValue {
     this.effect.stop();
   }
 }
-// src/is.ts
+// src/helpers/is.ts
 function isComputed(value) {
   return value?.type === "computed";
 }
@@ -213,7 +214,7 @@ function isReactive(value) {
 function isSignal(value) {
   return value?.type === "signal";
 }
-// src/item.ts
+// src/reactive/item.ts
 function item(value) {
   return new Item(value);
 }
@@ -225,7 +226,7 @@ class Item extends ReactiveObject {
     }));
   }
 }
-// src/signal.ts
+// src/reactive/signal.ts
 function signal(value) {
   return new Signal(value);
 }
@@ -245,7 +246,7 @@ class Signal extends ReactiveValue {
   }
 }
 
-// src/list.ts
+// src/reactive/list.ts
 function list(value) {
   return new List(value);
 }

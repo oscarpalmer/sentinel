@@ -1,6 +1,6 @@
 import type {ArrayOrPlainObject} from '@oscarpalmer/atoms/is';
-import {getValue, startReactivity, stopReactivity} from './helpers';
-import {type InternalEffect, Sentinel, type SentinelType} from './models';
+import {getValue, startReactivity, stopReactivity} from '../helpers';
+import {type InternalEffect, Sentinel, type SentinelType} from '../models';
 
 /**
  * Base class for a reactive value
