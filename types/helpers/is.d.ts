@@ -1,6 +1,6 @@
 import type { PlainObject } from '@oscarpalmer/atoms/is';
-import type { Computed } from '../reactive/computed';
 import type { Effect } from '../effect';
+import type { Computed } from '../reactive/computed';
 import type { List } from '../reactive/list';
 import type { Signal } from '../reactive/signal';
 import type { Store } from '../reactive/store';

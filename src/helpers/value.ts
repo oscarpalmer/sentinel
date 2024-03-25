@@ -1,15 +1,11 @@
 import type {ArrayOrPlainObject} from '@oscarpalmer/atoms/is';
 import type {InternalReactive} from '../models';
 import type {Signal} from '../reactive/signal';
+import {watch} from './effect';
 import {emit} from './event';
 
 export function getValue(reactive: InternalReactive): unknown {
-	const effect = globalThis._sentinels[globalThis._sentinels.length - 1];
-
-	if (effect != null) {
-		reactive.effects.add(effect);
-		effect.values.add(reactive);
-	}
+	watch(reactive);
 
 	return reactive._value;
 }

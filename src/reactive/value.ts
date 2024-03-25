@@ -1,5 +1,5 @@
-import {listen, silence} from '../helpers/event';
-import {type InternalEffect, Sentinel, type SentinelType} from '../models';
+import {disable, enable} from '../helpers/event';
+import {Sentinel, type InternalEffect, type SentinelType} from '../models';
 
 /**
  * Base class for a reactive value
@@ -40,14 +40,14 @@ export abstract class ReactiveValue<Value> extends Sentinel {
 	 * Enables reactivity for the value, if it was stopped
 	 */
 	run(): void {
-		listen(this as never);
+		enable(this as never);
 	}
 
 	/**
 	 * Disables reactivity for the value, if it's running
 	 */
 	stop(): void {
-		silence(this as never);
+		disable(this as never);
 	}
 
 	/**

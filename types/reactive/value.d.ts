@@ -1,4 +1,4 @@
-import { type InternalEffect, Sentinel, type SentinelType } from '../models';
+import { Sentinel, type InternalEffect, type SentinelType } from '../models';
 /**
  * Base class for a reactive value
  */

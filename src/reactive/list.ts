@@ -1,5 +1,5 @@
 import {emit} from '../helpers/event';
-import {getValue, setProxyValue} from '../helpers/value';
+import {setProxyValue} from '../helpers/value';
 import {ReactiveObject} from './object';
 import {Signal} from './signal';
 
@@ -29,13 +29,6 @@ export class List<Value> extends ReactiveObject<Value[]> {
 	 */
 	get length(): number {
 		return this._length.value;
-	}
-
-	/**
-	 * @inheritdoc
-	 */
-	get value(): Value[] {
-		return getValue(this as never) as Value[];
 	}
 
 	/**

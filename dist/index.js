@@ -51,6 +51,34 @@ class Effect extends Sentinel {
     this.values.clear();
   }
 }
+// src/helpers/is.ts
+function isComputed(value) {
+  return value?.type === "computed";
+}
+function isEffect(value) {
+  return value?.type === "effect";
+}
+function isList(value) {
+  return value?.type === "list";
+}
+function isReactive(value) {
+  return ["computed", "list", "signal", "store"].includes(value?.type);
+}
+function isSignal(value) {
+  return value?.type === "signal";
+}
+function isStore(value) {
+  return value?.type === "store";
+}
+// src/helpers/effect.ts
+function watch(reactive) {
+  const effect2 = globalThis._sentinels[globalThis._sentinels.length - 1];
+  if (effect2 == null) {
+    return;
+  }
+  reactive.effects.add(effect2);
+  effect2.values.add(reactive);
+}
 
 // node_modules/@oscarpalmer/atoms/dist/js/queue.mjs
 var queue = function(callback) {
@@ -75,20 +103,7 @@ if (globalThis._atomic_queued === undefined) {
 }
 
 // src/helpers/event.ts
-function emit(reactive) {
-  if (reactive.active) {
-    for (const effect2 of reactive.effects) {
-      queue(effect2.callback);
-    }
-  }
-}
-function listen(reactive) {
-  if (!reactive.active) {
-    reactive.active = true;
-    emit(reactive);
-  }
-}
-function silence(reactive) {
+function disable(reactive) {
   if (!reactive.active) {
     return;
   }
@@ -97,14 +112,23 @@ function silence(reactive) {
     effect2.values.delete(reactive);
   }
 }
+function emit(reactive) {
+  if (reactive.active) {
+    for (const effect2 of reactive.effects) {
+      queue(effect2.callback);
+    }
+  }
+}
+function enable(reactive) {
+  if (!reactive.active) {
+    reactive.active = true;
+    emit(reactive);
+  }
+}
 
 // src/helpers/value.ts
 function getValue(reactive) {
-  const effect2 = globalThis._sentinels[globalThis._sentinels.length - 1];
-  if (effect2 != null) {
-    reactive.effects.add(effect2);
-    effect2.values.add(reactive);
-  }
+  watch(reactive);
   return reactive._value;
 }
 function setProxyValue(reactive, target, length, property, value) {
@@ -143,10 +167,10 @@ class ReactiveValue extends Sentinel {
     return this._value;
   }
   run() {
-    listen(this);
+    enable(this);
   }
   stop() {
-    silence(this);
+    disable(this);
   }
   toJSON() {
     return this.value;
@@ -176,25 +200,6 @@ class Computed extends ReactiveValue {
   stop() {
     this.effect.stop();
   }
-}
-// src/helpers/is.ts
-function isComputed(value3) {
-  return value3?.type === "computed";
-}
-function isEffect(value3) {
-  return value3?.type === "effect";
-}
-function isList(value3) {
-  return value3?.type === "list";
-}
-function isReactive(value3) {
-  return ["computed", "list", "signal", "store"].includes(value3?.type);
-}
-function isSignal(value3) {
-  return value3?.type === "signal";
-}
-function isStore(value3) {
-  return value3?.type === "store";
 }
 // src/reactive/object.ts
 class ReactiveObject extends ReactiveValue {
@@ -263,9 +268,6 @@ class List extends ReactiveObject {
   _length = new Signal(0);
   get length() {
     return this._length.value;
-  }
-  get value() {
-    return getValue(this);
   }
   set length(value8) {
     this._value.length = value8 < 0 ? 0 : value8;
