@@ -1,6 +1,6 @@
 import type {ArrayOrPlainObject} from '@oscarpalmer/atoms/is';
 import {getValue, startReactivity, stopReactivity} from './helpers';
-import {type InternalEffect, Sentinel} from './models';
+import {type InternalEffect, Sentinel, type SentinelType} from './models';
 
 /**
  * Base class for a reactive value
@@ -16,8 +16,11 @@ export abstract class ReactiveValue<Value> extends Sentinel {
 	 */
 	abstract readonly value: Value;
 
-	constructor(protected _value: Value) {
-		super(true);
+	constructor(
+		type: SentinelType,
+		protected _value: Value,
+	) {
+		super(type, true);
 	}
 
 	/**

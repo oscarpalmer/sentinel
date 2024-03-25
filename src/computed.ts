@@ -19,7 +19,7 @@ export class Computed<Value> extends ReactiveValue<Value> {
 	private readonly effect: Effect;
 
 	constructor(callback: () => Value) {
-		super(undefined as never);
+		super('computed', undefined as never);
 
 		this.effect = new Effect(() => setValue(this as never, callback()));
 	}

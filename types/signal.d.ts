@@ -11,6 +11,7 @@ export declare class Signal<Value> extends ReactiveValue<Value> {
      * @inheritdoc
      */
     set value(value: Value);
+    constructor(value: Value);
     /**
      * Sets the value
      */

@@ -1,5 +1,5 @@
 import type { ArrayOrPlainObject } from '@oscarpalmer/atoms/is';
-import { type InternalEffect, Sentinel } from './models';
+import { type InternalEffect, Sentinel, type SentinelType } from './models';
 /**
  * Base class for a reactive value
  */
@@ -13,7 +13,7 @@ export declare abstract class ReactiveValue<Value> extends Sentinel {
      * The current value
      */
     abstract readonly value: Value;
-    constructor(_value: Value);
+    constructor(type: SentinelType, _value: Value);
     /**
      * The current value
      */

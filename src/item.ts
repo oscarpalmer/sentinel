@@ -8,6 +8,7 @@ import {ReactiveObject} from './reactive';
 export class Item<Model extends PlainObject> extends ReactiveObject<Model> {
 	constructor(value: Model) {
 		super(
+			'item',
 			new Proxy(value, {
 				set: (target, property, value) =>
 					setProxyValue(this as never, target, undefined, property, value),

@@ -10,29 +10,22 @@ import type {Signal} from './signal';
  * Is the value a computed, reactive value?
  */
 export function isComputed(value: unknown): value is Computed<unknown> {
-	return isInstance(/^computed$/i, value);
+	return (value as InternalSentinel)?.type === 'computed';
 }
 
 /**
  * Is the value a reactive effect?
  */
 export function isEffect(value: unknown): value is Effect {
-	return isInstance(/^effect$/i, value);
-}
-
-function isInstance(expression: RegExp, value: unknown): boolean {
-	return (
-		expression.test((value as Record<string, unknown>)?.constructor?.name) &&
-		(value as InternalSentinel).sentinel === true
-	);
+	return (value as InternalSentinel)?.type === 'effect';
 }
 
 export function isItem(value: unknown): value is Item<PlainObject> {
-	return isInstance(/^item$/i, value);
+	return (value as InternalSentinel)?.type === 'item';
 }
 
 export function isList(value: unknown): value is List<unknown> {
-	return isInstance(/^list$/i, value);
+	return (value as InternalSentinel)?.type === 'list';
 }
 
 /**
@@ -41,12 +34,14 @@ export function isList(value: unknown): value is List<unknown> {
 export function isReactive(
 	value: unknown,
 ): value is Computed<unknown> | List<unknown> | Signal<unknown> {
-	return isInstance(/^computed|item|list|signal$/i, value);
+	return ['computed', 'item', 'list', 'signal'].includes(
+		(value as InternalSentinel)?.type,
+	);
 }
 
 /**
  * Is the value a reactive value?
  */
 export function isSignal(value: unknown): value is Signal<unknown> {
-	return isInstance(/^signal$/i, value);
+	return (value as InternalSentinel)?.type === 'signal';
 }

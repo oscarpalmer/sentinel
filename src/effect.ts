@@ -10,7 +10,7 @@ export class Effect extends Sentinel {
 	private values = new Set<InternalReactive>();
 
 	constructor(private readonly callback: () => void) {
-		super(false);
+		super('effect', false);
 
 		this.start();
 	}

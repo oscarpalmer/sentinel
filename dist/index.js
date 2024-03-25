@@ -9,9 +9,10 @@ if (globalThis._sentinels === undefined) {
 }
 
 class Sentinel {
+  type;
   active;
-  sentinel = true;
-  constructor(active) {
+  constructor(type, active) {
+    this.type = type;
     this.active = active;
   }
 }
@@ -25,7 +26,7 @@ class Effect extends Sentinel {
   callback;
   values = new Set;
   constructor(callback) {
-    super(false);
+    super("effect", false);
     this.callback = callback;
     this.start();
   }
@@ -130,8 +131,8 @@ function stopReactivity(reactive) {
 class ReactiveValue extends Sentinel {
   _value;
   effects = new Set;
-  constructor(_value) {
-    super(true);
+  constructor(type, _value) {
+    super(type, true);
     this._value = _value;
   }
   get() {
@@ -183,7 +184,7 @@ class Computed extends ReactiveValue {
   }
   effect;
   constructor(callback) {
-    super(undefined);
+    super("computed", undefined);
     this.effect = new Effect(() => setValue(this, callback()));
   }
   run() {
@@ -195,25 +196,22 @@ class Computed extends ReactiveValue {
 }
 // src/is.ts
 function isComputed(value) {
-  return isInstance(/^computed$/i, value);
+  return value?.type === "computed";
 }
 function isEffect(value) {
-  return isInstance(/^effect$/i, value);
+  return value?.type === "effect";
 }
-var isInstance = function(expression, value) {
-  return expression.test(value?.constructor?.name) && value.sentinel === true;
-};
 function isItem(value) {
-  return isInstance(/^item$/i, value);
+  return value?.type === "item";
 }
 function isList(value) {
-  return isInstance(/^list$/i, value);
+  return value?.type === "list";
 }
 function isReactive(value) {
-  return isInstance(/^computed|item|list|signal$/i, value);
+  return ["computed", "item", "list", "signal"].includes(value?.type);
 }
 function isSignal(value) {
-  return isInstance(/^signal$/i, value);
+  return value?.type === "signal";
 }
 // src/item.ts
 function item(value) {
@@ -222,7 +220,7 @@ function item(value) {
 
 class Item extends ReactiveObject {
   constructor(value) {
-    super(new Proxy(value, {
+    super("item", new Proxy(value, {
       set: (target, property, value2) => setProxyValue(this, target, undefined, property, value2)
     }));
   }
@@ -233,14 +231,14 @@ function signal(value) {
 }
 
 class Signal extends ReactiveValue {
-  constructor() {
-    super(...arguments);
-  }
   get value() {
     return getValue(this);
   }
   set value(value) {
     setValue(this, value);
+  }
+  constructor(value) {
+    super("signal", value);
   }
   set(value) {
     setValue(this, value);
@@ -283,7 +281,7 @@ class List extends ReactiveObject {
     this._value.length = value < 0 ? 0 : value;
   }
   constructor(value) {
-    super(new Proxy(value, {
+    super("list", new Proxy(value, {
       get: (target, property) => {
         return operations.has(property) ? operation(this, this._length, target, property) : Reflect.get(target, property);
       },

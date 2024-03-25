@@ -46,6 +46,7 @@ export class List<Value> extends ReactiveObject<Value[]> {
 
 	constructor(value: Value[]) {
 		super(
+			'list',
 			new Proxy(value, {
 				get: (target, property) => {
 					return operations.has(property as never)

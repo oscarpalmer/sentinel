@@ -19,6 +19,10 @@ export class Signal<Value> extends ReactiveValue<Value> {
 		setValue(this as never, value);
 	}
 
+	constructor(value: Value) {
+		super('signal', value);
+	}
+
 	/**
 	 * Sets the value
 	 */

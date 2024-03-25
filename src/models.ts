@@ -24,11 +24,14 @@ export type InternalReactive = {
 
 export type InternalSentinel = {
 	active: boolean;
-	sentinel: boolean;
+	type: SentinelType;
 };
 
 export abstract class Sentinel {
-	protected readonly sentinel = true;
-
-	constructor(protected active: boolean) {}
+	constructor(
+		protected readonly type: SentinelType,
+		protected active: boolean,
+	) {}
 }
+
+export type SentinelType = 'computed' | 'effect' | 'item' | 'list' | 'signal';
