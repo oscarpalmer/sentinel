@@ -19,12 +19,14 @@ test('effect', done => {
 		expect(value).toBe('effect!');
 
 		fx.stop();
+		fx.stop();
 
 		sig.value += '!';
 
 		wait(() => {
 			expect(value).toBe('effect!');
 
+			fx.start();
 			fx.start();
 
 			wait(() => {

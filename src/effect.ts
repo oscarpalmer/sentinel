@@ -1,16 +1,16 @@
-import {Sentinel, type InternalReactive} from './models';
+import {type EffectState, Sentinel} from './models';
 
 /**
  * A reactive effect for changes in values
  */
 export class Effect extends Sentinel {
-	/**
-	 * Values accessed by the effect
-	 */
-	private values = new Set<InternalReactive>();
+	protected declare readonly state: EffectState;
 
-	constructor(private readonly callback: () => void) {
+	constructor(callback: () => void) {
 		super('effect', false);
+
+		this.state.callback = callback;
+		this.state.values = new Set();
 
 		this.start();
 	}
@@ -23,11 +23,11 @@ export class Effect extends Sentinel {
 			return;
 		}
 
-		this.active = true;
+		this.state.active = true;
 
 		const index = globalThis._sentinels.push(this as never) - 1;
 
-		this.callback();
+		this.state.callback();
 
 		globalThis._sentinels.splice(index, 1);
 	}
@@ -40,13 +40,13 @@ export class Effect extends Sentinel {
 			return;
 		}
 
-		this.active = false;
+		this.state.active = false;
 
-		for (const value of this.values) {
-			value.effects.delete(this as never);
+		for (const value of this.state.values) {
+			value.state.effects.delete(this as never);
 		}
 
-		this.values.clear();
+		this.state.values.clear();
 	}
 }
 

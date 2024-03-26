@@ -1,7 +1,6 @@
-import type { ArrayOrPlainObject } from '@oscarpalmer/atoms/is';
+import type { ArrayOrPlainObject } from '@oscarpalmer/atoms/models';
 import { ReactiveValue } from './value';
 export declare class ReactiveObject<Model extends ArrayOrPlainObject> extends ReactiveValue<Model> {
-    protected readonly id: string;
     /**
      * The current value
      */

@@ -1,4 +1,4 @@
-import type { PlainObject } from '@oscarpalmer/atoms/is';
+import type { PlainObject } from '@oscarpalmer/atoms/models';
 import type { Effect } from '../effect';
 import type { Computed } from '../reactive/computed';
 import type { List } from '../reactive/list';

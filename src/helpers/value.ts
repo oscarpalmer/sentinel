@@ -1,4 +1,4 @@
-import type {ArrayOrPlainObject} from '@oscarpalmer/atoms/is';
+import type {ArrayOrPlainObject} from '@oscarpalmer/atoms/models';
 import type {InternalReactive} from '../models';
 import type {Signal} from '../reactive/signal';
 import {watch} from './effect';
@@ -7,7 +7,7 @@ import {emit} from './event';
 export function getValue(reactive: InternalReactive): unknown {
 	watch(reactive);
 
-	return reactive._value;
+	return reactive.state.value;
 }
 
 export function setProxyValue(
@@ -37,8 +37,8 @@ export function setProxyValue(
 }
 
 export function setValue(reactive: InternalReactive, value: unknown): void {
-	if (!Object.is(reactive._value, value)) {
-		reactive._value = value;
+	if (!Object.is(reactive.state.value, value)) {
+		reactive.state.value = value;
 
 		emit(reactive);
 	}

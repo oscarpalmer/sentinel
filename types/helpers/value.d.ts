@@ -1,4 +1,4 @@
-import type { ArrayOrPlainObject } from '@oscarpalmer/atoms/is';
+import type { ArrayOrPlainObject } from '@oscarpalmer/atoms/models';
 import type { InternalReactive } from '../models';
 import type { Signal } from '../reactive/signal';
 export declare function getValue(reactive: InternalReactive): unknown;

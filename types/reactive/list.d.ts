@@ -1,17 +1,18 @@
+import type { ReactiveState } from '../models';
 import { ReactiveObject } from './object';
+import { Signal } from './signal';
+type ListState<Value> = {
+    length: Signal<number>;
+} & ReactiveState<Value[]>;
 /**
  * A reactive list
  */
 export declare class List<Value> extends ReactiveObject<Value[]> {
-    private readonly _length;
+    protected readonly state: ListState<Value>;
     /**
      * The length of the list
      */
     get length(): number;
-    /**
-     * @inheritdoc
-     */
-    get value(): Value[];
     /**
      * Sets the length of the list
      */
@@ -26,3 +27,4 @@ export declare class List<Value> extends ReactiveObject<Value[]> {
  * Creates a reactive list
  */
 export declare function list<Value>(value: Value[]): List<Value>;
+export {};

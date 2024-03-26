@@ -6,24 +6,32 @@ export function disable(reactive: InternalReactive): void {
 		return;
 	}
 
-	reactive.active = false;
+	reactive.state.active = false;
 
-	for (const effect of reactive.effects) {
-		effect.values.delete(reactive);
+	for (const effect of reactive.state.effects) {
+		effect.state.values.delete(reactive);
 	}
 }
 
 export function emit(reactive: InternalReactive): void {
-	if (reactive.active) {
-		for (const effect of reactive.effects) {
-			queue(effect.callback);
-		}
+	if (!reactive.active) {
+		return;
+	}
+
+	const {effects, subscribers} = reactive.state;
+
+	const callbacks = [...effects, ...subscribers.values()].map(value =>
+		typeof value === 'function' ? value : value.state.callback,
+	);
+
+	for (const callback of callbacks) {
+		queue(callback);
 	}
 }
 
 export function enable(reactive: InternalReactive): void {
 	if (!reactive.active) {
-		reactive.active = true;
+		reactive.state.active = true;
 
 		emit(reactive);
 	}

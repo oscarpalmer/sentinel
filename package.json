@@ -4,7 +4,7 @@
 		"url": "https://oscarpalmer.se"
 	},
 	"dependencies": {
-		"@oscarpalmer/atoms": "0.31.0"
+		"@oscarpalmer/atoms": "0.32.0"
 	},
 	"description": "",
 	"devDependencies": {
@@ -43,5 +43,5 @@
 	},
 	"type": "module",
 	"types": "./types/index.d.ts",
-	"version": "0.10.0"
+	"version": "0.11.0"
 }

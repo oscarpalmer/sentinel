@@ -1,11 +1,18 @@
 import {Effect} from '../effect';
 import {getValue, setValue} from '../helpers/value';
+import type {ReactiveState} from '../models';
 import {ReactiveValue} from './value';
+
+type ComputedState<Value> = {
+	effect: Effect;
+} & ReactiveState<Value>;
 
 /**
  * A computed, reactive value
  */
 export class Computed<Value> extends ReactiveValue<Value> {
+	protected declare readonly state: ComputedState<Value>;
+
 	/**
 	 * @inheritdoc
 	 */
@@ -13,29 +20,24 @@ export class Computed<Value> extends ReactiveValue<Value> {
 		return getValue(this as never) as Value;
 	}
 
-	/**
-	 * Effect for computing the value
-	 */
-	private readonly effect: Effect;
-
 	constructor(callback: () => Value) {
 		super('computed', undefined as never);
 
-		this.effect = new Effect(() => setValue(this as never, callback()));
+		this.state.effect = new Effect(() => setValue(this as never, callback()));
 	}
 
 	/**
 	 * @inheritdoc
 	 */
 	run(): void {
-		this.effect.start();
+		this.state.effect.start();
 	}
 
 	/**
 	 * @inheritdoc
 	 */
 	stop(): void {
-		this.effect.stop();
+		this.state.effect.stop();
 	}
 }
 

@@ -1,13 +1,9 @@
-import { Sentinel } from './models';
+import { type EffectState, Sentinel } from './models';
 /**
  * A reactive effect for changes in values
  */
 export declare class Effect extends Sentinel {
-    private readonly callback;
-    /**
-     * Values accessed by the effect
-     */
-    private values;
+    protected readonly state: EffectState;
     constructor(callback: () => void);
     /**
      * Starts reacting to changes

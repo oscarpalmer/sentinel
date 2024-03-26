@@ -1,4 +1,4 @@
-import type { PlainObject } from '@oscarpalmer/atoms/is';
+import type { PlainObject } from '@oscarpalmer/atoms/models';
 import { ReactiveObject } from './object';
 /**
  * A reactive store

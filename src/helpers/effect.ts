@@ -9,6 +9,6 @@ export function watch(reactive: InternalReactive): void {
 		return;
 	}
 
-	reactive.effects.add(effect);
-	effect.values.add(reactive);
+	reactive.state.effects.add(effect);
+	effect.state.values.add(reactive);
 }

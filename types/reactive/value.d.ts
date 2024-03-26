@@ -1,18 +1,14 @@
-import { Sentinel, type InternalEffect, type SentinelType } from '../models';
+import { Sentinel, type SentinelType, type Subscriber, type ReactiveState } from '../models';
 /**
  * Base class for a reactive value
  */
 export declare abstract class ReactiveValue<Value> extends Sentinel {
-    protected _value: Value;
-    /**
-     * Effects that have accessed the value
-     */
-    protected readonly effects: Set<InternalEffect>;
+    protected readonly state: ReactiveState<Value>;
     /**
      * The current value
      */
     abstract readonly value: Value;
-    constructor(type: SentinelType, _value: Value);
+    constructor(type: SentinelType, value: Value);
     /**
      * The current value
      */
@@ -30,6 +26,10 @@ export declare abstract class ReactiveValue<Value> extends Sentinel {
      */
     stop(): void;
     /**
+     * Adds a subscriber to the value
+     */
+    subscribe(subscriber: Subscriber<Value>): void;
+    /**
      * Get the JSON representation of the value
      */
     toJSON(): Value;
@@ -37,4 +37,8 @@ export declare abstract class ReactiveValue<Value> extends Sentinel {
      * Get the string representation of the value
      */
     toString(): string;
+    /**
+     * Removes a subscriber from the value
+     */
+    unsubscribe(subscriber: Subscriber<Value>): void;
 }

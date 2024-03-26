@@ -1,12 +1,10 @@
-import type {ArrayOrPlainObject} from '@oscarpalmer/atoms/is';
+import type {ArrayOrPlainObject} from '@oscarpalmer/atoms/models';
 import {getValue} from '../helpers/value';
 import {ReactiveValue} from './value';
 
 export class ReactiveObject<
 	Model extends ArrayOrPlainObject,
 > extends ReactiveValue<Model> {
-	protected declare readonly id: string;
-
 	/**
 	 * The current value
 	 */
@@ -45,7 +43,7 @@ export class ReactiveObject<
 	peek<Property extends keyof Model>(
 		property?: Property,
 	): Model[Property] | Model {
-		return property == null ? this._value : this._value[property];
+		return property == null ? this.state.value : this.state.value[property];
 	}
 
 	/**
@@ -55,6 +53,6 @@ export class ReactiveObject<
 		property: Property,
 		value: Model[Property],
 	): void {
-		this._value[property] = value;
+		this.state.value[property] = value;
 	}
 }
