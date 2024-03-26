@@ -7,6 +7,7 @@ export {
 	isReactive,
 	isSignal,
 	isStore,
+	type Reactive,
 } from './helpers/is';
 export {computed, type Computed} from './reactive/computed';
 export {list, type List} from './reactive/list';

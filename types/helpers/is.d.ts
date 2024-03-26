@@ -4,6 +4,7 @@ import type { Computed } from '../reactive/computed';
 import type { List } from '../reactive/list';
 import type { Signal } from '../reactive/signal';
 import type { Store } from '../reactive/store';
+export type Reactive = Computed<unknown> | List<unknown> | Signal<unknown> | Store<PlainObject>;
 /**
  * Is the value a computed, reactive value?
  */
@@ -19,7 +20,7 @@ export declare function isList(value: unknown): value is List<unknown>;
 /**
  * Is the value a reactive value?
  */
-export declare function isReactive(value: unknown): value is Computed<unknown> | List<unknown> | Signal<unknown>;
+export declare function isReactive(value: unknown): value is Reactive;
 /**
  * Is the value a reactive value?
  */
