@@ -1,4 +1,5 @@
 import type { ReactiveState } from '../models';
+import { Computed } from './computed';
 import { ReactiveObject } from './object';
 import { Signal } from './signal';
 type ListState<Value> = {
@@ -22,6 +23,18 @@ export declare class List<Value> extends ReactiveObject<Value[]> {
      * Gets the value at the specified index
      */
     at(index: number): Value | undefined;
+    /**
+     * Calls a defined callback function on each value in the list, and returns a computed value that contains the results
+     */
+    map<Next>(callbackfn: (value: Value, index: number, array: Value[]) => Next): Computed<Next[]>;
+    /**
+     * Appends new values to the end of the list, and returns the new length of the list
+     */
+    push(...values: Value[]): number;
+    /**
+     * Removes values from the list and, if necessary, inserts new values in their place, returning the deleted values
+     */
+    splice(start: number, deleteCount?: number, ...values: Value[]): Value[];
 }
 /**
  * Creates a reactive list

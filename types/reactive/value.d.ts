@@ -2,7 +2,7 @@ import { Sentinel, type Subscriber, type ReactiveState, type Unsubscriber } from
 /**
  * Base class for a reactive value
  */
-export declare abstract class ReactiveValue<Value> extends Sentinel {
+export declare class ReactiveValue<Value> extends Sentinel {
     protected readonly state: ReactiveState<Value>;
     constructor(value: Value);
     /**

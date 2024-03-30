@@ -1,6 +1,6 @@
 import {expect, test} from 'bun:test';
 import {wait} from '@oscarpalmer/atoms/timer';
-import {effect, list} from '../src';
+import {effect, isComputed, list} from '../src';
 
 test('list', done => {
 	const arr = list([1, 2, 3]);
@@ -9,6 +9,10 @@ test('list', done => {
 	expect(JSON.stringify(arr.peek())).toBe('[1,2,3]');
 	expect(JSON.stringify(arr.toJSON())).toBe('[1,2,3]');
 	expect(arr.toString()).toBe('1,2,3');
+
+	const mapped = arr.map(value => value * 2);
+
+	expect(isComputed(mapped)).toBe(true);
 
 	let value: unknown = undefined;
 
@@ -20,7 +24,7 @@ test('list', done => {
 
 	arr.stop();
 
-	arr.get().push(4);
+	arr.push(4);
 
 	wait(() => {
 		expect(arr.at(-1)).toBe(4);
@@ -34,7 +38,7 @@ test('list', done => {
 			arr.length = arr.length + 1;
 
 			wait(() => {
-				expect(value).toBe('[1,2,3,4,null]');
+				expect(value).toBe('[1,2,3,4]');
 
 				arr.set(4, 5);
 

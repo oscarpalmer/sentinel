@@ -1,27 +1,12 @@
-import {emit} from '../helpers/event';
-import {setProxyValue} from '../helpers/value';
+import {getProxyValue, setProxyValue} from '../helpers/value';
 import type {ReactiveState} from '../models';
+import {Computed} from './computed';
 import {ReactiveObject} from './object';
 import {Signal} from './signal';
 
 type ListState<Value> = {
 	length: Signal<number>;
 } & ReactiveState<Value[]>;
-
-/**
- * Array operations that should trigger reactivity
- */
-const operations = new Set([
-	'copyWithin',
-	'fill',
-	'pop',
-	'push',
-	'reverse',
-	'shift',
-	'sort',
-	'splice',
-	'unshift',
-]);
 
 /**
  * A reactive list
@@ -46,23 +31,15 @@ export class List<Value> extends ReactiveObject<Value[]> {
 	constructor(value: Value[]) {
 		super(
 			new Proxy(value, {
-				get: (target, property) => {
-					return operations.has(property as never)
-						? operation(
-								this as never,
-								this.state.length,
-								target,
-								property as never,
-							)
-						: Reflect.get(target, property);
-				},
+				get: (target, property) =>
+					getProxyValue(this as never, target, property, true),
 				set: (target, property, value) =>
 					setProxyValue(
 						this as never,
 						target,
-						this.state.length,
 						property,
 						value,
+						this.state.length,
 					),
 			}),
 		);
@@ -76,6 +53,29 @@ export class List<Value> extends ReactiveObject<Value[]> {
 	at(index: number): Value | undefined {
 		return this.state.value.at(index);
 	}
+
+	/**
+	 * Calls a defined callback function on each value in the list, and returns a computed value that contains the results
+	 */
+	map<Next>(
+		callbackfn: (value: Value, index: number, array: Value[]) => Next,
+	): Computed<Next[]> {
+		return new Computed(() => this.get().map(callbackfn));
+	}
+
+	/**
+	 * Appends new values to the end of the list, and returns the new length of the list
+	 */
+	push(...values: Value[]): number {
+		return this.get().push(...values);
+	}
+
+	/**
+	 * Removes values from the list and, if necessary, inserts new values in their place, returning the deleted values
+	 */
+	splice(start: number, deleteCount?: number, ...values: Value[]): Value[] {
+		return this.get().splice(start, deleteCount ?? 0, ...values);
+	}
 }
 
 /**
@@ -83,23 +83,4 @@ export class List<Value> extends ReactiveObject<Value[]> {
  */
 export function list<Value>(value: Value[]) {
 	return new List<Value>(value);
-}
-
-function operation(
-	list: List<unknown>,
-	length: Signal<number>,
-	array: unknown[],
-	operation: string,
-): unknown {
-	return (...args: unknown[]): unknown => {
-		const result = (
-			array[operation as never] as (...args: unknown[]) => unknown
-		)(...args);
-
-		emit(list as never);
-
-		length.set(array.length);
-
-		return result;
-	};
 }
