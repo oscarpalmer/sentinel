@@ -9,7 +9,7 @@ export {
 	isStore,
 	type Reactive,
 } from './helpers/is';
-export {reactive} from './reactive';
+export {reactive} from './reactive/index';
 export {computed, type Computed} from './reactive/computed';
 export {list, type List} from './reactive/list';
 export {signal, type Signal} from './reactive/signal';
