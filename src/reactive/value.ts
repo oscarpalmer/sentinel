@@ -1,9 +1,10 @@
 import {disable, enable} from '../helpers/event';
+import {getValue} from '../helpers/value';
 import {
 	Sentinel,
-	type SentinelType,
 	type Subscriber,
 	type ReactiveState,
+	type Unsubscriber,
 } from '../models';
 
 /**
@@ -12,13 +13,8 @@ import {
 export abstract class ReactiveValue<Value> extends Sentinel {
 	protected declare readonly state: ReactiveState<Value>;
 
-	/**
-	 * The current value
-	 */
-	abstract readonly value: Value;
-
-	constructor(type: SentinelType, value: Value) {
-		super(type, true);
+	constructor(value: Value) {
+		super(true);
 
 		this.state.effects = new Set();
 		this.state.subscribers = new Map();
@@ -29,7 +25,7 @@ export abstract class ReactiveValue<Value> extends Sentinel {
 	 * The current value
 	 */
 	get(): Value {
-		return this.value;
+		return getValue(this as never) as Value;
 	}
 
 	/**
@@ -56,30 +52,34 @@ export abstract class ReactiveValue<Value> extends Sentinel {
 	/**
 	 * Adds a subscriber to the value
 	 */
-	subscribe(subscriber: Subscriber<Value>): void {
+	subscribe(subscriber: Subscriber<Value>): Unsubscriber {
 		const {subscribers, value} = this.state;
 
 		if (subscribers.has(subscriber)) {
-			return;
+			return () => {};
 		}
 
 		subscribers.set(subscriber, () => subscriber(value));
 
 		subscriber(value);
+
+		return () => {
+			this.state.subscribers.delete(subscriber);
+		};
 	}
 
 	/**
 	 * Get the JSON representation of the value
 	 */
 	toJSON(): Value {
-		return this.value;
+		return this.get();
 	}
 
 	/**
 	 * Get the string representation of the value
 	 */
 	toString(): string {
-		return String(this.value);
+		return String(this.get());
 	}
 
 	/**

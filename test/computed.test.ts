@@ -5,28 +5,28 @@ import {computed, signal} from '../src';
 test('computed', done => {
 	const first = signal('comp');
 	const second = signal('uted');
-	const third = computed(() => first.value + second.value);
+	const third = computed(() => first.get() + second.get());
 
 	expect(third.get()).toBe('computed');
 	expect(third.peek()).toBe('computed');
 
-	first.value += '!!!';
+	first.update(current => `${current}!!!`);
 
 	wait(() => {
-		expect(third.value).toBe('comp!!!uted');
+		expect(third.get()).toBe('comp!!!uted');
 
 		wait(() => {
 			third.stop();
 
-			second.value += '!!!';
+			second.update(current => `${current}!!!`);
 
 			wait(() => {
-				expect(third.value).toBe('comp!!!uted');
+				expect(third.get()).toBe('comp!!!uted');
 
 				third.run();
 
 				wait(() => {
-					expect(third.value).toBe('comp!!!uted!!!');
+					expect(third.get()).toBe('comp!!!uted!!!');
 
 					done();
 				});

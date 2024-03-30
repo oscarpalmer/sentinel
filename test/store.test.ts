@@ -12,13 +12,12 @@ test('store', done => {
 	let keyValue = '?';
 
 	effect(() => {
-		keyValue = obj.value.key;
+		keyValue = obj.get().key;
 	});
 
-	expect(obj.value).toEqual(obj.get());
-	expect(obj.value).toEqual(obj.peek());
+	expect(obj.get()).toEqual(obj.peek());
 
-	expect(obj.value.key).toBe(keyValue);
+	expect(obj.get().key).toBe(keyValue);
 
 	obj.stop();
 

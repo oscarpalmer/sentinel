@@ -1,14 +1,10 @@
-import { Sentinel, type SentinelType, type Subscriber, type ReactiveState } from '../models';
+import { Sentinel, type Subscriber, type ReactiveState, type Unsubscriber } from '../models';
 /**
  * Base class for a reactive value
  */
 export declare abstract class ReactiveValue<Value> extends Sentinel {
     protected readonly state: ReactiveState<Value>;
-    /**
-     * The current value
-     */
-    abstract readonly value: Value;
-    constructor(type: SentinelType, value: Value);
+    constructor(value: Value);
     /**
      * The current value
      */
@@ -28,7 +24,7 @@ export declare abstract class ReactiveValue<Value> extends Sentinel {
     /**
      * Adds a subscriber to the value
      */
-    subscribe(subscriber: Subscriber<Value>): void;
+    subscribe(subscriber: Subscriber<Value>): Unsubscriber;
     /**
      * Get the JSON representation of the value
      */

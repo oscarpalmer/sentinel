@@ -5,7 +5,6 @@ import {effect, list} from '../src';
 test('list', done => {
 	const arr = list([1, 2, 3]);
 
-	expect(JSON.stringify(arr.value)).toBe('[1,2,3]');
 	expect(JSON.stringify(arr.get())).toBe('[1,2,3]');
 	expect(JSON.stringify(arr.peek())).toBe('[1,2,3]');
 	expect(JSON.stringify(arr.toJSON())).toBe('[1,2,3]');
@@ -14,14 +13,14 @@ test('list', done => {
 	let value: unknown = undefined;
 
 	effect(() => {
-		value = JSON.stringify(arr.value);
+		value = JSON.stringify(arr.get());
 	});
 
 	expect(value).toBe('[1,2,3]');
 
 	arr.stop();
 
-	arr.value.push(4);
+	arr.get().push(4);
 
 	wait(() => {
 		expect(arr.at(-1)).toBe(4);

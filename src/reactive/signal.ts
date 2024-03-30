@@ -1,4 +1,4 @@
-import {getValue, setValue} from '../helpers/value';
+import {setValue} from '../helpers/value';
 import {ReactiveValue} from './value';
 
 /**
@@ -6,28 +6,17 @@ import {ReactiveValue} from './value';
  */
 export class Signal<Value> extends ReactiveValue<Value> {
 	/**
-	 * @inheritdoc
-	 */
-	get value(): Value {
-		return getValue(this as never) as Value;
-	}
-
-	/**
-	 * @inheritdoc
-	 */
-	set value(value: Value) {
-		setValue(this as never, value);
-	}
-
-	constructor(value: Value) {
-		super('signal', value);
-	}
-
-	/**
 	 * Sets the value
 	 */
 	set(value: Value): void {
 		setValue(this as never, value);
+	}
+
+	/**
+	 * Updates the value
+	 */
+	update(updater: (current: Value) => Value): void {
+		this.set(updater(this.get()));
 	}
 }
 

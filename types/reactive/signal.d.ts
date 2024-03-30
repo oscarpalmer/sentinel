@@ -4,18 +4,13 @@ import { ReactiveValue } from './value';
  */
 export declare class Signal<Value> extends ReactiveValue<Value> {
     /**
-     * @inheritdoc
-     */
-    get value(): Value;
-    /**
-     * @inheritdoc
-     */
-    set value(value: Value);
-    constructor(value: Value);
-    /**
      * Sets the value
      */
     set(value: Value): void;
+    /**
+     * Updates the value
+     */
+    update(updater: (current: Value) => Value): void;
 }
 /**
  * Creates a reactive value

@@ -9,7 +9,6 @@ test('signal', done => {
 
 	const sig = signal('signal');
 
-	expect(sig.value).toBe('signal');
 	expect(sig.get()).toBe('signal');
 	expect(sig.peek()).toBe('signal');
 	expect(sig.toJSON()).toBe('signal');
@@ -19,10 +18,10 @@ test('signal', done => {
 	let valueFromSubscriber: unknown = undefined;
 
 	effect(() => {
-		valueFromEffect = sig.value;
+		valueFromEffect = sig.get();
 	});
 
-	sig.subscribe(subscriber);
+	const unsub = sig.subscribe(subscriber);
 
 	expect(valueFromEffect).toBe('signal');
 	expect(valueFromSubscriber).toBe(valueFromEffect);
@@ -30,11 +29,12 @@ test('signal', done => {
 	sig.stop();
 	sig.stop();
 
+	unsub();
+
 	sig.unsubscribe(subscriber);
 
-	sig.set(`${sig.value}!`);
-
-	sig.value = sig.peek();
+	sig.set(`${sig}!`);
+	sig.set(sig.peek());
 
 	wait(() => {
 		expect(valueFromEffect).toBe('signal');

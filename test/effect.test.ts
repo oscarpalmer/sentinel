@@ -8,12 +8,12 @@ test('effect', done => {
 	const sig = signal('effect');
 
 	const fx = effect(() => {
-		value = sig.value;
+		value = sig.get();
 	});
 
 	expect(value).toBe('effect');
 
-	sig.value += '!';
+	sig.set(`${sig}!`);
 
 	wait(() => {
 		expect(value).toBe('effect!');
@@ -21,7 +21,7 @@ test('effect', done => {
 		fx.stop();
 		fx.stop();
 
-		sig.value += '!';
+		sig.set(`${sig}!`);
 
 		wait(() => {
 			expect(value).toBe('effect!');

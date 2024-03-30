@@ -32,19 +32,22 @@ export class Sentinel {
 		return this.state.active;
 	}
 
-	constructor(type: SentinelType, active: boolean) {
-		this.state = {active, type};
+	constructor(active: boolean) {
+		this.state = {active};
 	}
 }
 
 export type SentinelState = {
 	active: boolean;
-	type: SentinelType;
 };
-
-export type SentinelType = 'computed' | 'effect' | 'list' | 'signal' | 'store';
 
 /**
  * A subscriber for a reactive value, called when the value changes
  */
 export type Subscriber<Value> = (value: Value) => void;
+
+/**
+ * - A function that unsubscribes a subscriber from a reactive value
+ * - Receieved when subscribing to a reactive value
+ */
+export type Unsubscriber = () => void;

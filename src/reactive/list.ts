@@ -33,7 +33,7 @@ export class List<Value> extends ReactiveObject<Value[]> {
 	 * The length of the list
 	 */
 	get length(): number {
-		return this.state.length.value;
+		return this.state.length.get();
 	}
 
 	/**
@@ -45,7 +45,6 @@ export class List<Value> extends ReactiveObject<Value[]> {
 
 	constructor(value: Value[]) {
 		super(
-			'list',
 			new Proxy(value, {
 				get: (target, property) => {
 					return operations.has(property as never)
@@ -54,7 +53,7 @@ export class List<Value> extends ReactiveObject<Value[]> {
 								this.state.length,
 								target,
 								property as never,
-						  )
+							)
 						: Reflect.get(target, property);
 				},
 				set: (target, property, value) =>

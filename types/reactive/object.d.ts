@@ -2,10 +2,6 @@ import type { ArrayOrPlainObject } from '@oscarpalmer/atoms/models';
 import { ReactiveValue } from './value';
 export declare class ReactiveObject<Model extends ArrayOrPlainObject> extends ReactiveValue<Model> {
     /**
-     * The current value
-     */
-    get value(): Model;
-    /**
      * Gets value for a property
      */
     get<Property extends keyof Model>(property: Property): Model[Property];

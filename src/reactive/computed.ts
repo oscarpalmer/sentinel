@@ -1,5 +1,5 @@
 import {Effect} from '../effect';
-import {getValue, setValue} from '../helpers/value';
+import {setValue} from '../helpers/value';
 import type {ReactiveState} from '../models';
 import {ReactiveValue} from './value';
 
@@ -13,15 +13,8 @@ type ComputedState<Value> = {
 export class Computed<Value> extends ReactiveValue<Value> {
 	protected declare readonly state: ComputedState<Value>;
 
-	/**
-	 * @inheritdoc
-	 */
-	get value(): Value {
-		return getValue(this as never) as Value;
-	}
-
 	constructor(callback: () => Value) {
-		super('computed', undefined as never);
+		super(undefined as never);
 
 		this.state.effect = new Effect(() => setValue(this as never, callback()));
 	}

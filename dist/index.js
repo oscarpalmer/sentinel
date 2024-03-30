@@ -35,8 +35,8 @@ class Sentinel {
   get active() {
     return this.state.active;
   }
-  constructor(type, active) {
-    this.state = { active, type };
+  constructor(active) {
+    this.state = { active };
   }
 }
 
@@ -47,7 +47,7 @@ function effect(callback) {
 
 class Effect extends Sentinel {
   constructor(callback) {
-    super("effect", false);
+    super(false);
     this.state.callback = callback;
     this.state.values = new Set;
     this.start();
@@ -74,22 +74,25 @@ class Effect extends Sentinel {
 }
 // src/helpers/is.ts
 function isComputed(value) {
-  return value?.state?.type === "computed";
+  return isInstance(value, /^computed$/i);
 }
 function isEffect(value) {
-  return value?.state?.type === "effect";
+  return isInstance(value, /^effect$/i);
 }
+var isInstance = function(value, expression) {
+  return expression.test(value?.constructor?.name ?? "");
+};
 function isList(value) {
-  return value?.state?.type === "list";
+  return isInstance(value, /^list$/i);
 }
 function isReactive(value) {
-  return ["computed", "list", "signal", "store"].includes(value?.state?.type);
+  return isInstance(value, /^computed|list|signal|store$/i);
 }
 function isSignal(value) {
-  return value?.state?.type === "signal";
+  return isInstance(value, /^signal$/i);
 }
 function isStore(value) {
-  return value?.state?.type === "store";
+  return isInstance(value, /^store$/i);
 }
 // src/helpers/effect.ts
 function watch(reactive) {
@@ -156,14 +159,14 @@ function setValue(reactive, value) {
 
 // src/reactive/value.ts
 class ReactiveValue extends Sentinel {
-  constructor(type, value) {
-    super(type, true);
+  constructor(value2) {
+    super(true);
     this.state.effects = new Set;
     this.state.subscribers = new Map;
-    this.state.value = value;
+    this.state.value = value2;
   }
   get() {
-    return this.value;
+    return getValue(this);
   }
   peek() {
     return this.state.value;
@@ -175,18 +178,22 @@ class ReactiveValue extends Sentinel {
     disable(this);
   }
   subscribe(subscriber) {
-    const { subscribers, value } = this.state;
+    const { subscribers, value: value2 } = this.state;
     if (subscribers.has(subscriber)) {
-      return;
+      return () => {
+      };
     }
-    subscribers.set(subscriber, () => subscriber(value));
-    subscriber(value);
+    subscribers.set(subscriber, () => subscriber(value2));
+    subscriber(value2);
+    return () => {
+      this.state.subscribers.delete(subscriber);
+    };
   }
   toJSON() {
-    return this.value;
+    return this.get();
   }
   toString() {
-    return String(this.value);
+    return String(this.get());
   }
   unsubscribe(subscriber) {
     this.state.subscribers.delete(subscriber);
@@ -199,11 +206,8 @@ function computed(callback) {
 }
 
 class Computed extends ReactiveValue {
-  get value() {
-    return getValue(this);
-  }
   constructor(callback) {
-    super("computed", undefined);
+    super(undefined);
     this.state.effect = new Effect(() => setValue(this, callback()));
   }
   run() {
@@ -218,43 +222,37 @@ class ReactiveObject extends ReactiveValue {
   constructor() {
     super(...arguments);
   }
-  get value() {
-    return getValue(this);
-  }
   get(property) {
-    return property == null ? getValue(this) : this.value[property];
+    return property == null ? getValue(this) : this.state.value[property];
   }
   peek(property) {
     return property == null ? this.state.value : this.state.value[property];
   }
-  set(property, value5) {
-    this.state.value[property] = value5;
+  set(property, value6) {
+    this.state.value[property] = value6;
   }
 }
 
 // src/reactive/signal.ts
-function signal(value7) {
-  return new Signal(value7);
+function signal(value8) {
+  return new Signal(value8);
 }
 
 class Signal extends ReactiveValue {
-  get value() {
-    return getValue(this);
+  constructor() {
+    super(...arguments);
   }
-  set value(value7) {
-    setValue(this, value7);
+  set(value8) {
+    setValue(this, value8);
   }
-  constructor(value7) {
-    super("signal", value7);
-  }
-  set(value7) {
-    setValue(this, value7);
+  update(updater) {
+    this.set(updater(this.get()));
   }
 }
 
 // src/reactive/list.ts
-function list(value8) {
-  return new List(value8);
+function list(value9) {
+  return new List(value9);
 }
 var operation = function(list2, length, array, operation2) {
   return (...args) => {
@@ -278,33 +276,33 @@ var operations = new Set([
 
 class List extends ReactiveObject {
   get length() {
-    return this.state.length.value;
+    return this.state.length.get();
   }
-  set length(value8) {
-    this.state.value.length = value8 < 0 ? 0 : value8;
+  set length(value9) {
+    this.state.value.length = value9 < 0 ? 0 : value9;
   }
-  constructor(value8) {
-    super("list", new Proxy(value8, {
+  constructor(value9) {
+    super(new Proxy(value9, {
       get: (target, property) => {
         return operations.has(property) ? operation(this, this.state.length, target, property) : Reflect.get(target, property);
       },
-      set: (target, property, value9) => setProxyValue(this, target, this.state.length, property, value9)
+      set: (target, property, value10) => setProxyValue(this, target, this.state.length, property, value10)
     }));
-    this.state.length = new Signal(value8.length);
+    this.state.length = new Signal(value9.length);
   }
   at(index) {
     return this.state.value.at(index);
   }
 }
 // src/reactive/store.ts
-function store(value9) {
-  return new Store(value9);
+function store(value10) {
+  return new Store(value10);
 }
 
 class Store extends ReactiveObject {
-  constructor(value9) {
-    super("store", new Proxy(value9, {
-      set: (target, property, value10) => setProxyValue(this, target, undefined, property, value10)
+  constructor(value10) {
+    super(new Proxy(value10, {
+      set: (target, property, value11) => setProxyValue(this, target, undefined, property, value11)
     }));
   }
 }

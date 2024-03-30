@@ -7,7 +7,7 @@ export class Effect extends Sentinel {
 	protected declare readonly state: EffectState;
 
 	constructor(callback: () => void) {
-		super('effect', false);
+		super(false);
 
 		this.state.callback = callback;
 		this.state.values = new Set();

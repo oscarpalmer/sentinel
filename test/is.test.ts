@@ -17,12 +17,12 @@ test('is', () => {
 	let value = '';
 
 	const sig = signal('isSignal');
-	const com = computed(() => `isComputed: ${sig.value}!!!`);
+	const com = computed(() => `isComputed: ${sig}!!!`);
 	const arr = list([1, 2, 3]);
 	const obj = store({key: 'value'});
 
 	const fx = effect(() => {
-		value += com.value;
+		value += com.get();
 	});
 
 	expect(isComputed(com)).toBe(true);

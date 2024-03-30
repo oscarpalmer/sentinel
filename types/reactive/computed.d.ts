@@ -9,10 +9,6 @@ type ComputedState<Value> = {
  */
 export declare class Computed<Value> extends ReactiveValue<Value> {
     protected readonly state: ComputedState<Value>;
-    /**
-     * @inheritdoc
-     */
-    get value(): Value;
     constructor(callback: () => Value);
     /**
      * @inheritdoc
