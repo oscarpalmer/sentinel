@@ -5,12 +5,6 @@ import type {List} from '../reactive/list';
 import type {Signal} from '../reactive/signal';
 import type {Store} from '../reactive/store';
 
-export type Reactive =
-	| Computed<unknown>
-	| List<unknown>
-	| Signal<unknown>
-	| Store<PlainObject>;
-
 /**
  * Is the value a computed, reactive value?
  */
@@ -39,7 +33,13 @@ export function isList(value: unknown): value is List<unknown> {
 /**
  * Is the value a reactive value?
  */
-export function isReactive(value: unknown): value is Reactive {
+export function isReactive(
+	value: unknown,
+): value is
+	| Computed<unknown>
+	| List<unknown>
+	| Signal<unknown>
+	| Store<PlainObject> {
 	return isInstance(value, /^computed|list|signal|store$/i);
 }
 

@@ -1,9 +1,9 @@
 import {disable, enable} from '../helpers/event';
 import {getValue} from '../helpers/value';
 import {
+	type ReactiveState,
 	Sentinel,
 	type Subscriber,
-	type ReactiveState,
 	type Unsubscriber,
 } from '../models';
 

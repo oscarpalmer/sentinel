@@ -5,10 +5,8 @@ export function watch(reactive: InternalReactive): void {
 		globalThis._sentinels.length - 1
 	] as InternalEffect;
 
-	if (effect == null) {
-		return;
+	if (effect != null) {
+		reactive.state.effects.add(effect);
+		effect.state.values.add(reactive);
 	}
-
-	reactive.state.effects.add(effect);
-	effect.state.values.add(reactive);
 }

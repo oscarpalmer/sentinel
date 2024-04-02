@@ -1,4 +1,4 @@
-import { type EffectState, Sentinel } from './models';
+import { Sentinel, type EffectState } from './models';
 /**
  * A reactive effect for changes in values
  */

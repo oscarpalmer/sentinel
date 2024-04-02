@@ -21,7 +21,7 @@ if (globalThis._atomic_queued === undefined) {
 }
 
 // src/global.ts
-if (globalThis._sentinels === undefined) {
+if (globalThis._sentinels == null) {
   const effects = [];
   Object.defineProperty(globalThis, "_sentinels", {
     get() {
@@ -53,23 +53,21 @@ class Effect extends Sentinel {
     this.start();
   }
   start() {
-    if (this.active) {
-      return;
+    if (!this.active) {
+      this.state.active = true;
+      const index = globalThis._sentinels.push(this) - 1;
+      this.state.callback();
+      globalThis._sentinels.splice(index, 1);
     }
-    this.state.active = true;
-    const index = globalThis._sentinels.push(this) - 1;
-    this.state.callback();
-    globalThis._sentinels.splice(index, 1);
   }
   stop() {
-    if (!this.active) {
-      return;
+    if (this.active) {
+      this.state.active = false;
+      for (const value of this.state.values) {
+        value.state.effects.delete(this);
+      }
+      this.state.values.clear();
     }
-    this.state.active = false;
-    for (const value of this.state.values) {
-      value.state.effects.delete(this);
-    }
-    this.state.values.clear();
   }
 }
 // src/helpers/is.ts
@@ -94,46 +92,31 @@ function isSignal(value) {
 function isStore(value) {
   return isInstance(value, /^store$/i);
 }
-// node_modules/@oscarpalmer/atoms/dist/js/is.mjs
-var isArrayOrPlainObject = function(value) {
-  return Array.isArray(value) || isPlainObject(value);
-};
-var isPlainObject = function(value) {
-  if (typeof value !== "object" || value === null) {
-    return false;
-  }
-  const prototype = Object.getPrototypeOf(value);
-  return (prototype === null || prototype === Object.prototype || Object.getPrototypeOf(prototype) === null) && !(Symbol.toStringTag in value) && !(Symbol.iterator in value);
-};
-
 // src/helpers/effect.ts
 function watch(reactive) {
   const effect2 = globalThis._sentinels[globalThis._sentinels.length - 1];
-  if (effect2 == null) {
-    return;
+  if (effect2 != null) {
+    reactive.state.effects.add(effect2);
+    effect2.state.values.add(reactive);
   }
-  reactive.state.effects.add(effect2);
-  effect2.state.values.add(reactive);
 }
 
 // src/helpers/event.ts
 function disable(reactive) {
-  if (!reactive.active) {
-    return;
-  }
-  reactive.state.active = false;
-  for (const effect2 of reactive.state.effects) {
-    effect2.state.values.delete(reactive);
+  if (reactive.active) {
+    reactive.state.active = false;
+    for (const effect2 of reactive.state.effects) {
+      effect2.state.values.delete(reactive);
+    }
   }
 }
 function emit(reactive) {
-  if (!reactive.active) {
-    return;
-  }
-  const { effects, subscribers } = reactive.state;
-  const callbacks = [...effects, ...subscribers.values()].map((value) => typeof value === "function" ? value : value.state.callback);
-  for (const callback of callbacks) {
-    queue(callback);
+  if (reactive.active) {
+    const { effects, subscribers } = reactive.state;
+    const callbacks = [...effects, ...subscribers.values()].map((value) => typeof value === "function" ? value : value.state.callback);
+    for (const callback of callbacks) {
+      queue(callback);
+    }
   }
 }
 function enable(reactive) {
@@ -144,25 +127,9 @@ function enable(reactive) {
 }
 
 // src/helpers/value.ts
-function getProxyValue(obj, target, property, isArray) {
-  return isArray && operations.has(property) ? updateArray(obj, target, property) : Reflect.get(target, property);
-}
 function getValue(reactive) {
   watch(reactive);
   return reactive.state.value;
-}
-function setProxyValue(obj, target, property, value, length, wrapper) {
-  const previous = Reflect.get(target, property);
-  if (Object.is(previous, value)) {
-    return true;
-  }
-  const next = typeof wrapper === "function" && isArrayOrPlainObject(value) ? wrapper(obj, value) : value;
-  const result = Reflect.set(target, property, next);
-  if (result) {
-    emit(obj);
-    length?.set(target.length);
-  }
-  return result;
 }
 function setValue(reactive, value) {
   if (!Object.is(reactive.state.value, value)) {
@@ -178,7 +145,7 @@ function updateArray(obj, array, operation, length) {
     return result;
   };
 }
-var operations = new Set([
+var arrayOperations = new Set([
   "copyWithin",
   "fill",
   "pop",
@@ -250,11 +217,58 @@ class Computed extends ReactiveValue {
     this.state.effect.stop();
   }
 }
+// node_modules/@oscarpalmer/atoms/dist/js/is.mjs
+var isArrayOrPlainObject = function(value4) {
+  return Array.isArray(value4) || isPlainObject(value4);
+};
+var isPlainObject = function(value4) {
+  if (typeof value4 !== "object" || value4 === null) {
+    return false;
+  }
+  const prototype = Object.getPrototypeOf(value4);
+  return (prototype === null || prototype === Object.prototype || Object.getPrototypeOf(prototype) === null) && !(Symbol.toStringTag in value4) && !(Symbol.iterator in value4);
+};
+
+// src/helpers/proxy.ts
+function createProxy(store, value5, length) {
+  const isArray = Array.isArray(value5);
+  const proxied = new Proxy(isArray ? value5 : {}, {
+    get: (target, property) => getProxyValue(store, target, property, isArray),
+    set: (target, property, value6) => setProxyValue(store, target, property, value6, length)
+  });
+  if (!isArray) {
+    const keys = Object.keys(value5);
+    const size = keys.length;
+    let index = 0;
+    for (;index < size; index += 1) {
+      const key = keys[index];
+      proxied[key] = value5[key];
+    }
+  }
+  return proxied;
+}
+function getProxyValue(obj, target, property, isArray, length) {
+  return isArray && arrayOperations.has(property) ? updateArray(obj, target, property, length) : Reflect.get(target, property);
+}
+function setProxyValue(obj, target, property, value5, length) {
+  const previous = Reflect.get(target, property);
+  if (Object.is(previous, value5)) {
+    return true;
+  }
+  const next = length != null && isArrayOrPlainObject(value5) ? createProxy(obj, value5) : value5;
+  const result = Reflect.set(target, property, next);
+  if (result) {
+    emit(obj);
+    length?.set(target.length);
+  }
+  return result;
+}
 
 // src/reactive/object.ts
 class ReactiveObject extends ReactiveValue {
-  constructor() {
-    super(...arguments);
+  constructor(value7, isArray, length) {
+    super(isArray ? [] : {});
+    this.state.value = createProxy(this, value7, length);
   }
   get(property) {
     return property == null ? getValue(this) : this.state.value[property];
@@ -262,22 +276,22 @@ class ReactiveObject extends ReactiveValue {
   peek(property) {
     return property == null ? this.state.value : this.state.value[property];
   }
-  set(property, value6) {
-    this.state.value[property] = value6;
+  set(property, value7) {
+    this.state.value[property] = value7;
   }
 }
 
 // src/reactive/signal.ts
-function signal(value8) {
-  return new Signal(value8);
+function signal(value9) {
+  return new Signal(value9);
 }
 
 class Signal extends ReactiveValue {
   constructor() {
     super(...arguments);
   }
-  set(value8) {
-    setValue(this, value8);
+  set(value9) {
+    setValue(this, value9);
   }
   update(updater) {
     this.set(updater(this.get()));
@@ -297,69 +311,52 @@ class List extends ReactiveObject {
     this.state.value.length = value9 < 0 ? 0 : value9;
   }
   constructor(value9) {
-    super(new Proxy(value9, {
-      get: (target, property) => getProxyValue(this, target, property, true),
-      set: (target, property, value10) => setProxyValue(this, target, property, value10, this.state.length)
-    }));
-    this.state.length = new Signal(value9.length);
+    const length = new Signal(value9.length);
+    super(value9, true, length);
+    this.state.length = length;
   }
   at(index) {
     return this.state.value.at(index);
   }
   map(callbackfn) {
-    return new Computed(() => this.get().map(callbackfn));
+    return new Computed(() => this.state.value.map(callbackfn));
   }
   push(...values) {
-    return this.get().push(...values);
+    return this.state.value.push(...values);
   }
   splice(start, deleteCount, ...values) {
-    return this.get().splice(start, deleteCount ?? 0, ...values);
+    return this.state.value.splice(start, deleteCount ?? 0, ...values);
   }
 }
 
 // src/reactive/store.ts
-var proxy = function(store, value10) {
-  const isArray = Array.isArray(value10);
-  const proxied = new Proxy(isArray ? [] : {}, {
-    get: (target, property) => getProxyValue(store, target, property, isArray),
-    set: (target, property, value11) => setProxyValue(store, target, property, value11, undefined, proxy)
-  });
-  const keys = Object.keys(value10);
-  const { length } = keys;
-  let index = 0;
-  for (;index < length; index += 1) {
-    const key = keys[index];
-    proxied[key] = value10[key];
-  }
-  return proxied;
-};
-function store(value10) {
-  return new Store(value10);
+function store(value9) {
+  return new Store(value9);
 }
 
 class Store extends ReactiveObject {
-  constructor(value10) {
-    super({});
-    this.state.value = proxy(this, value10);
+  constructor(value9) {
+    super({}, false);
+    this.state.value = createProxy(this, value9);
   }
 }
 
 // src/reactive/index.ts
-function reactive(value10) {
-  if (value10 == null || isReactive(value10)) {
-    return value10;
+function reactive(value9) {
+  if (value9 == null || isReactive(value9)) {
+    return value9;
   }
   switch (true) {
-    case Array.isArray(value10):
-      return new List(value10);
-    case isPlainObject(value10):
-      return new Store(value10);
-    case typeof value10 === "function":
-      return new Computed(value10);
-    case ["boolean", "number", "string"].includes(typeof value10):
-      return new Signal(value10);
+    case Array.isArray(value9):
+      return new List(value9);
+    case isPlainObject(value9):
+      return new Store(value9);
+    case typeof value9 === "function":
+      return new Computed(value9);
+    case ["boolean", "number", "string"].includes(typeof value9):
+      return new Signal(value9);
     default:
-      return value10;
+      return value9;
   }
 }
 export {

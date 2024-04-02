@@ -5,7 +5,7 @@ declare global {
 	var _sentinels: InternalEffect[];
 }
 
-if (globalThis._sentinels === undefined) {
+if (globalThis._sentinels == null) {
 	const effects: InternalEffect[] = [];
 
 	Object.defineProperty(globalThis, '_sentinels', {

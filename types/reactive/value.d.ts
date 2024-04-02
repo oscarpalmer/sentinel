@@ -1,4 +1,4 @@
-import { Sentinel, type Subscriber, type ReactiveState, type Unsubscriber } from '../models';
+import { type ReactiveState, Sentinel, type Subscriber, type Unsubscriber } from '../models';
 /**
  * Base class for a reactive value
  */

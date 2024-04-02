@@ -1,5 +1,5 @@
-import {isPlainObject} from '@oscarpalmer/atoms/is';
 import type {PlainObject} from '@oscarpalmer/atoms';
+import {isPlainObject} from '@oscarpalmer/atoms/is';
 import {isReactive} from '../helpers/is';
 import {Computed} from './computed';
 import {List} from './list';

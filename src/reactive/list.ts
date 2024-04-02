@@ -1,4 +1,3 @@
-import {getProxyValue, setProxyValue} from '../helpers/value';
 import type {ReactiveState} from '../models';
 import {Computed} from './computed';
 import {ReactiveObject} from './object';
@@ -29,22 +28,11 @@ export class List<Value> extends ReactiveObject<Value[]> {
 	}
 
 	constructor(value: Value[]) {
-		super(
-			new Proxy(value, {
-				get: (target, property) =>
-					getProxyValue(this as never, target, property, true),
-				set: (target, property, value) =>
-					setProxyValue(
-						this as never,
-						target,
-						property,
-						value,
-						this.state.length,
-					),
-			}),
-		);
+		const length = new Signal(value.length);
 
-		this.state.length = new Signal(value.length);
+		super(value, true, length);
+
+		this.state.length = length;
 	}
 
 	/**
@@ -60,21 +48,21 @@ export class List<Value> extends ReactiveObject<Value[]> {
 	map<Next>(
 		callbackfn: (value: Value, index: number, array: Value[]) => Next,
 	): Computed<Next[]> {
-		return new Computed(() => this.get().map(callbackfn));
+		return new Computed(() => this.state.value.map(callbackfn));
 	}
 
 	/**
 	 * Appends new values to the end of the list, and returns the new length of the list
 	 */
 	push(...values: Value[]): number {
-		return this.get().push(...values);
+		return this.state.value.push(...values);
 	}
 
 	/**
 	 * Removes values from the list and, if necessary, inserts new values in their place, returning the deleted values
 	 */
 	splice(start: number, deleteCount?: number, ...values: Value[]): Value[] {
-		return this.get().splice(start, deleteCount ?? 0, ...values);
+		return this.state.value.splice(start, deleteCount ?? 0, ...values);
 	}
 }
 
