@@ -1,7 +1,5 @@
-import type {InternalReactive} from '../models';
-import type {ReactiveObject} from '../reactive/object';
-import type {Signal} from '../reactive/signal';
-import {watch} from './effect';
+import {watch} from '../effect';
+import type {ReactiveState, Signal} from '../models';
 import {emit} from './event';
 
 export const arrayOperations = new Set([
@@ -16,23 +14,26 @@ export const arrayOperations = new Set([
 	'unshift',
 ]);
 
-export function getValue(reactive: InternalReactive): unknown {
+export function getValue<Value>(reactive: ReactiveState<Value>): Value {
 	watch(reactive);
 
-	return reactive.state.value;
+	return reactive.value;
 }
 
-export function setValue(reactive: InternalReactive, value: unknown): void {
-	if (!Object.is(reactive.state.value, value)) {
-		reactive.state.value = value;
+export function setValue<Value>(
+	reactive: ReactiveState<Value>,
+	value: Value,
+): void {
+	if (!Object.is(reactive.value, value)) {
+		reactive.value = value;
 
 		emit(reactive);
 	}
 }
 
-export function updateArray(
-	obj: ReactiveObject<never>,
-	array: unknown[],
+export function updateArray<Value>(
+	reactive: ReactiveState<Value[]>,
+	array: Value[],
 	operation: string,
 	length?: Signal<number>,
 ): (...args: unknown[]) => unknown {
@@ -41,7 +42,7 @@ export function updateArray(
 			array[operation as never] as (...args: unknown[]) => unknown
 		)(...args);
 
-		emit(obj as never);
+		emit(reactive);
 
 		length?.set(array.length);
 

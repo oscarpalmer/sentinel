@@ -1,10 +1,11 @@
-import type {PlainObject} from '@oscarpalmer/atoms';
 import {isPlainObject} from '@oscarpalmer/atoms/is';
+import type {PlainObject} from '@oscarpalmer/atoms/models';
 import {isReactive} from '../helpers/is';
-import {Computed} from './computed';
-import {List} from './list';
-import {Signal} from './signal';
-import {Store} from './store';
+import type {Computed, List, Signal, Store} from '../models';
+import {computed} from './computed';
+import {list} from './list';
+import {signal} from './signal';
+import {store} from './store';
 
 type Primitive = boolean | number | string;
 
@@ -37,16 +38,16 @@ export function reactive(value: unknown): unknown {
 
 	switch (true) {
 		case Array.isArray(value):
-			return new List(value);
+			return list(value);
 
 		case isPlainObject(value):
-			return new Store(value);
+			return store(value);
 
 		case typeof value === 'function':
-			return new Computed(value as never);
+			return computed(value as never);
 
 		case ['boolean', 'number', 'string'].includes(typeof value):
-			return new Signal(value);
+			return signal(value);
 
 		default:
 			return value;

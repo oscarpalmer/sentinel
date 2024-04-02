@@ -1,12 +1,12 @@
 import '@oscarpalmer/atoms/queue';
-import type {InternalEffect} from './models';
+import type {EffectState} from './models';
 
 declare global {
-	var _sentinels: InternalEffect[];
+	var _sentinels: EffectState[];
 }
 
 if (globalThis._sentinels == null) {
-	const effects: InternalEffect[] = [];
+	const effects: EffectState[] = [];
 
 	Object.defineProperty(globalThis, '_sentinels', {
 		get() {

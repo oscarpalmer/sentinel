@@ -1,17 +1,4 @@
-import { ReactiveValue } from './value';
-/**
- * A reactive value
- */
-export declare class Signal<Value> extends ReactiveValue<Value> {
-    /**
-     * Sets the value
-     */
-    set(value: Value): void;
-    /**
-     * Updates the value
-     */
-    update(updater: (current: Value) => Value): void;
-}
+import type { Signal } from '../models';
 /**
  * Creates a reactive value
  */

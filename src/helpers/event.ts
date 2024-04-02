@@ -1,22 +1,22 @@
 import {queue} from '@oscarpalmer/atoms/queue';
-import type {InternalReactive} from '../models';
+import type {ReactiveState} from '../models';
 
-export function disable(reactive: InternalReactive): void {
-	if (reactive.active) {
-		reactive.state.active = false;
+export function disable<Value>(state: ReactiveState<Value>): void {
+	if (state.active) {
+		state.active = false;
 
-		for (const effect of reactive.state.effects) {
-			effect.state.values.delete(reactive);
+		for (const effect of state.effects) {
+			effect.reactives.delete(state as never);
 		}
 	}
 }
 
-export function emit(reactive: InternalReactive): void {
-	if (reactive.active) {
-		const {effects, subscribers} = reactive.state;
+export function emit<Value>(state: ReactiveState<Value>): void {
+	if (state.active) {
+		const {effects, subscribers} = state;
 
 		const callbacks = [...effects, ...subscribers.values()].map(value =>
-			typeof value === 'function' ? value : value.state.callback,
+			typeof value === 'function' ? value : value.callback,
 		);
 
 		for (const callback of callbacks) {
@@ -25,10 +25,10 @@ export function emit(reactive: InternalReactive): void {
 	}
 }
 
-export function enable(reactive: InternalReactive): void {
-	if (!reactive.active) {
-		reactive.state.active = true;
+export function enable<Value>(state: ReactiveState<Value>): void {
+	if (!state.active) {
+		state.active = true;
 
-		emit(reactive);
+		emit(state);
 	}
 }

@@ -1,8 +1,5 @@
-import type { PlainObject } from '@oscarpalmer/atoms';
-import { Computed } from './computed';
-import { List } from './list';
-import { Signal } from './signal';
-import { Store } from './store';
+import type { PlainObject } from '@oscarpalmer/atoms/models';
+import type { Computed, List, Signal, Store } from '../models';
 type Primitive = boolean | number | string;
 /**
  * Creates a reactive list

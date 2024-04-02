@@ -1,6 +1,6 @@
 import {expect, test} from 'bun:test';
 import {wait} from '@oscarpalmer/atoms/timer';
-import {effect, isComputed, list} from '../src';
+import {effect, list} from '../src';
 
 test('list', done => {
 	const arr = list([1, 2, 3]);
@@ -11,8 +11,6 @@ test('list', done => {
 	expect(arr.toString()).toBe('1,2,3');
 
 	const mapped = arr.map(value => value * 2);
-
-	expect(isComputed(mapped)).toBe(true);
 
 	let value: unknown = undefined;
 

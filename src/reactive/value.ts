@@ -1,91 +1,63 @@
 import {disable, enable} from '../helpers/event';
 import {getValue} from '../helpers/value';
-import {
-	type ReactiveState,
-	Sentinel,
-	type Subscriber,
-	type Unsubscriber,
-} from '../models';
+import type {ReactiveState, Subscriber, Unsubscriber} from '../models';
 
-/**
- * Base class for a reactive value
- */
-export class ReactiveValue<Value> extends Sentinel {
-	protected declare readonly state: ReactiveState<Value>;
+export function reactiveValue<Value>(value: Value) {
+	const state: ReactiveState<Value> = {
+		value,
+		active: true,
+		effects: new Set(),
+		subscribers: new Map(),
+	};
 
-	constructor(value: Value) {
-		super(true);
+	const callbacks = {
+		get(): Value {
+			return getValue(state);
+		},
 
-		this.state.effects = new Set();
-		this.state.subscribers = new Map();
-		this.state.value = value;
-	}
+		peek(): Value {
+			return state.value;
+		},
 
-	/**
-	 * The current value
-	 */
-	get(): Value {
-		return getValue(this as never) as Value;
-	}
+		toJSON(): Value {
+			return getValue(state);
+		},
 
-	/**
-	 * Gets the current value, without reaction
-	 */
-	peek(): Value {
-		return this.state.value;
-	}
+		toString(): string {
+			return String(getValue(state));
+		},
 
-	/**
-	 * Enables reactivity for the value, if it was stopped
-	 */
-	run(): void {
-		enable(this as never);
-	}
+		run(): void {
+			enable(state);
+		},
 
-	/**
-	 * Disables reactivity for the value, if it's running
-	 */
-	stop(): void {
-		disable(this as never);
-	}
+		stop(): void {
+			disable(state);
+		},
 
-	/**
-	 * Adds a subscriber to the value
-	 */
-	subscribe(subscriber: Subscriber<Value>): Unsubscriber {
-		const {subscribers, value} = this.state;
+		subscribe(subscriber: Subscriber<Value>): Unsubscriber {
+			const {subscribers, value} = state;
 
-		if (subscribers.has(subscriber)) {
-			return () => {};
-		}
+			if (subscribers.has(subscriber)) {
+				return () => {};
+			}
 
-		subscribers.set(subscriber, () => subscriber(value));
+			subscribers.set(subscriber, () => subscriber(value));
 
-		subscriber(value);
+			subscriber(value);
 
-		return () => {
-			this.state.subscribers.delete(subscriber);
-		};
-	}
+			return () => {
+				state.subscribers.delete(subscriber);
+			};
+		},
 
-	/**
-	 * Get the JSON representation of the value
-	 */
-	toJSON(): Value {
-		return this.get();
-	}
+		unsubscribe(subscriber: Subscriber<Value>): void {
+			state.subscribers.delete(subscriber);
+		},
+	};
 
-	/**
-	 * Get the string representation of the value
-	 */
-	toString(): string {
-		return String(this.get());
-	}
-
-	/**
-	 * Removes a subscriber from the value
-	 */
-	unsubscribe(subscriber: Subscriber<Value>): void {
-		this.state.subscribers.delete(subscriber);
-	}
+	return {
+		callbacks,
+		state,
+	};
 }

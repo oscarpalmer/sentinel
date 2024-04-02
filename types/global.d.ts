@@ -1,5 +1,5 @@
 import '@oscarpalmer/atoms/queue';
-import type { InternalEffect } from './models';
+import type { EffectState } from './models';
 declare global {
-    var _sentinels: InternalEffect[];
+    var _sentinels: EffectState[];
 }

@@ -1,33 +1,25 @@
 import type {PlainObject} from '@oscarpalmer/atoms/models';
-import type {Effect} from '../effect';
-import type {Computed} from '../reactive/computed';
-import type {List} from '../reactive/list';
-import type {Signal} from '../reactive/signal';
-import type {Store} from '../reactive/store';
+import type {Computed, Effect, List, Signal, Store} from '../models';
 
 /**
  * Is the value a computed, reactive value?
  */
 export function isComputed(value: unknown): value is Computed<unknown> {
-	return isInstance(value, /^computed$/i);
+	return isSentinel(value, /^computed$/i);
 }
 
 /**
  * Is the value a reactive effect?
  */
 export function isEffect(value: unknown): value is Effect {
-	return isInstance(value, /^effect$/i);
-}
-
-function isInstance(value: unknown, expression: RegExp): boolean {
-	return expression.test(value?.constructor?.name ?? '');
+	return isSentinel(value, /^effect$/i);
 }
 
 /**
  * Is the value a reactive list?
  */
 export function isList(value: unknown): value is List<unknown> {
-	return isInstance(value, /^list$/i);
+	return isSentinel(value, /^list$/i);
 }
 
 /**
@@ -40,19 +32,23 @@ export function isReactive(
 	| List<unknown>
 	| Signal<unknown>
 	| Store<PlainObject> {
-	return isInstance(value, /^computed|list|signal|store$/i);
+	return isSentinel(value, /^computed|list|signal|store$/i);
+}
+
+function isSentinel(value: unknown, expression: RegExp): boolean {
+	return expression.test((value as any)?.$sentinel ?? '');
 }
 
 /**
  * Is the value a reactive value?
  */
 export function isSignal(value: unknown): value is Signal<unknown> {
-	return isInstance(value, /^signal$/i);
+	return isSentinel(value, /^signal$/i);
 }
 
 /**
  * Is the value a reactive store?
  */
 export function isStore(value: unknown): value is Store<PlainObject> {
-	return isInstance(value, /^store$/i);
+	return isSentinel(value, /^store$/i);
 }

@@ -1,9 +1,5 @@
 import type { PlainObject } from '@oscarpalmer/atoms/models';
-import type { Effect } from '../effect';
-import type { Computed } from '../reactive/computed';
-import type { List } from '../reactive/list';
-import type { Signal } from '../reactive/signal';
-import type { Store } from '../reactive/store';
+import type { Computed, Effect, List, Signal, Store } from '../models';
 /**
  * Is the value a computed, reactive value?
  */

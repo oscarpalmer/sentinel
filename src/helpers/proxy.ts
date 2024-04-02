@@ -1,22 +1,21 @@
 import {isArrayOrPlainObject} from '@oscarpalmer/atoms/is';
 import type {ArrayOrPlainObject, PlainObject} from '@oscarpalmer/atoms/models';
-import type {ReactiveObject} from '../reactive/object';
-import type {Signal} from '../reactive/signal';
+import type {ReactiveState, Signal} from '../models';
 import {emit} from './event';
 import {arrayOperations, updateArray} from './value';
 
-export function createProxy<Model extends ArrayOrPlainObject>(
-	store: ReactiveObject<Model>,
-	value: Model,
+export function createProxy(
+	reactive: ReactiveState<ArrayOrPlainObject>,
+	value: ArrayOrPlainObject,
 	length?: Signal<number>,
-): Model {
+): ArrayOrPlainObject {
 	const isArray = Array.isArray(value);
 
 	const proxied = new Proxy(isArray ? value : {}, {
 		get: (target, property) =>
-			getProxyValue(store as never, target, property, isArray),
+			getProxyValue(reactive, target, property, isArray),
 		set: (target, property, value) =>
-			setProxyValue(store as never, target, property, value, length),
+			setProxyValue(reactive, target, property, value, length),
 	}) as PlainObject;
 
 	if (!isArray) {
@@ -32,23 +31,28 @@ export function createProxy<Model extends ArrayOrPlainObject>(
 		}
 	}
 
-	return proxied as Model;
+	return proxied;
 }
 
 export function getProxyValue(
-	obj: ReactiveObject<never>,
+	reactive: ReactiveState<ArrayOrPlainObject>,
 	target: ArrayOrPlainObject,
 	property: PropertyKey,
 	isArray: boolean,
 	length?: Signal<number>,
 ): unknown {
 	return isArray && arrayOperations.has(property as never)
-		? updateArray(obj, target as never, property as never, length)
+		? updateArray(
+				reactive as ReactiveState<unknown[]>,
+				target as unknown[],
+				property as string,
+				length,
+			)
 		: Reflect.get(target, property);
 }
 
 export function setProxyValue(
-	obj: ReactiveObject<never>,
+	reactive: ReactiveState<ArrayOrPlainObject>,
 	target: ArrayOrPlainObject,
 	property: PropertyKey,
 	value: unknown,
@@ -62,13 +66,13 @@ export function setProxyValue(
 
 	const next =
 		length != null && isArrayOrPlainObject(value)
-			? createProxy(obj as never, value)
+			? createProxy(reactive, value)
 			: value;
 
 	const result = Reflect.set(target, property, next);
 
 	if (result) {
-		emit(obj as never);
+		emit(reactive);
 
 		length?.set((target as unknown[]).length);
 	}

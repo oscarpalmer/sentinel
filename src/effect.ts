@@ -1,54 +1,57 @@
-import {Sentinel, type EffectState} from './models';
-
-/**
- * A reactive effect for changes in values
- */
-export class Effect extends Sentinel {
-	protected declare readonly state: EffectState;
-
-	constructor(callback: () => void) {
-		super(false);
-
-		this.state.callback = callback;
-		this.state.values = new Set();
-
-		this.start();
-	}
-
-	/**
-	 * Starts reacting to changes
-	 */
-	start(): void {
-		if (!this.active) {
-			this.state.active = true;
-
-			const index = globalThis._sentinels.push(this as never) - 1;
-
-			this.state.callback();
-
-			globalThis._sentinels.splice(index, 1);
-		}
-	}
-
-	/**
-	 * Stops reacting to changes
-	 */
-	stop(): void {
-		if (this.active) {
-			this.state.active = false;
-
-			for (const value of this.state.values) {
-				value.state.effects.delete(this as never);
-			}
-
-			this.state.values.clear();
-		}
-	}
-}
+import type {Effect, EffectState, ReactiveState} from './models';
 
 /**
  * Creates a reactive effect
  */
 export function effect(callback: () => void): Effect {
-	return new Effect(callback);
+	const state: EffectState = {
+		callback,
+		active: false,
+		reactives: new Set(),
+	};
+
+	const instance = Object.create({
+		start(): void {
+			if (!state.active) {
+				state.active = true;
+
+				const index = globalThis._sentinels.push(state) - 1;
+
+				state.callback();
+
+				globalThis._sentinels.splice(index, 1);
+			}
+		},
+
+		stop(): void {
+			if (state.active) {
+				state.active = false;
+
+				for (const reactive of state.reactives) {
+					reactive.effects.delete(state);
+				}
+
+				state.reactives.clear();
+			}
+		},
+	});
+
+	Object.defineProperty(instance, '$sentinel', {
+		value: 'effect',
+	});
+
+	instance.start();
+
+	return instance;
+}
+
+export function watch<Value>(reactive: ReactiveState<Value>): void {
+	const effect = globalThis._sentinels[
+		globalThis._sentinels.length - 1
+	] as EffectState;
+
+	if (effect != null) {
+		reactive.effects.add(effect);
+		effect.reactives.add(reactive as never);
+	}
 }

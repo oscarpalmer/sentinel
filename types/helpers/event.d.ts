@@ -1,4 +1,4 @@
-import type { InternalReactive } from '../models';
-export declare function disable(reactive: InternalReactive): void;
-export declare function emit(reactive: InternalReactive): void;
-export declare function enable(reactive: InternalReactive): void;
+import type { ReactiveState } from '../models';
+export declare function disable<Value>(state: ReactiveState<Value>): void;
+export declare function emit<Value>(state: ReactiveState<Value>): void;
+export declare function enable<Value>(state: ReactiveState<Value>): void;

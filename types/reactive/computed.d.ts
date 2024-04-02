@@ -1,26 +1,5 @@
-import { Effect } from '../effect';
-import type { ReactiveState } from '../models';
-import { ReactiveValue } from './value';
-type ComputedState<Value> = {
-    effect: Effect;
-} & ReactiveState<Value>;
-/**
- * A computed, reactive value
- */
-export declare class Computed<Value> extends ReactiveValue<Value> {
-    protected readonly state: ComputedState<Value>;
-    constructor(callback: () => Value);
-    /**
-     * @inheritdoc
-     */
-    run(): void;
-    /**
-     * @inheritdoc
-     */
-    stop(): void;
-}
+import type { Computed } from '../models';
 /**
  * Creates a computed, reactive value
  */
-export declare function computed<Value>(callback: () => Value): Computed<Value>;
-export {};
+export declare function computed<Value>(value: () => Value): Computed<Value>;
