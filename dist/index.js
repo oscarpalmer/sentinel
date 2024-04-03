@@ -88,9 +88,6 @@ var isSentinel = function(value, expression) {
 function isSignal(value) {
   return isSentinel(value, /^signal$/i);
 }
-function isStore(value) {
-  return isSentinel(value, /^store$/i);
-}
 // src/helpers/event.ts
 function disable(state) {
   if (state.active) {
@@ -224,8 +221,8 @@ var isPlainObject = function(value4) {
 };
 
 // src/helpers/proxy.ts
-function getProxyValue(reactive, target, property, isArray, length) {
-  if (isArray && arrayOperations.has(property)) {
+function getProxyValue(reactive, target, property, length) {
+  if (arrayOperations.has(property)) {
     return updateArray(reactive, target, property, length);
   }
   const value5 = Reflect.get(target, property);
@@ -243,37 +240,11 @@ function setProxyValue(reactive, target, property, value5, length) {
   return result;
 }
 
-// src/reactive/object.ts
-function reactiveObject(value7, length) {
-  const original = reactiveValue(Array.isArray(value7) ? [] : {});
-  original.state.value = new Proxy(value7, {
-    get(target, property) {
-      return getProxyValue(original.state, target, property, Array.isArray(target), length);
-    },
-    set(target, property, value8) {
-      return setProxyValue(original.state, target, property, value8, length);
-    }
-  });
-  function get(property) {
-    return property == null ? getValue(original.state) : original.state.value[property];
-  }
-  function peek(property) {
-    return property == null ? original.state.value : original.state.value[property];
-  }
-  function set(property, value8) {
-    original.state.value[property] = value8;
-  }
-  return {
-    callbacks: { ...original.callbacks, get, peek, set },
-    state: original.state
-  };
-}
-
 // src/reactive/signal.ts
-function signal(value9) {
-  const original = reactiveValue(value9);
-  function set(value10) {
-    setValue(original.state, value10);
+function signal(value7) {
+  const original = reactiveValue(value7);
+  function set(value8) {
+    setValue(original.state, value8);
   }
   function update(updater) {
     setValue(original.state, updater(original.state.value));
@@ -292,17 +263,34 @@ function signal(value9) {
 // src/reactive/list.ts
 function list(value9) {
   const length = signal(value9.length);
-  const original = reactiveObject(value9, length);
+  const original = reactiveValue([]);
+  original.state.value = new Proxy(value9, {
+    get(target, property) {
+      return getProxyValue(original.state, target, property, length);
+    },
+    set(target, property, value10) {
+      return setProxyValue(original.state, target, property, value10, length);
+    }
+  });
   const instance = Object.create({
     ...original.callbacks,
     at(index) {
       return original.state.value.at(index);
     },
+    get(property) {
+      return property == null ? getValue(original.state) : original.state.value[property];
+    },
     map(callbackfn) {
       return computed(() => original.state.value.map(callbackfn));
     },
+    peek(property) {
+      return property == null ? original.state.value : original.state.value[property];
+    },
     push(...values) {
       return original.state.value.push(...values);
+    },
+    set(property, value10) {
+      original.state.value[property] = value10;
     },
     splice(start, deleteCount, ...values) {
       return original.state.value.splice(start, deleteCount ?? 0, ...values);
@@ -324,39 +312,29 @@ function list(value9) {
   return instance;
 }
 
-// src/reactive/store.ts
-function store(value9) {
-  const instance = Object.create(reactiveObject(value9).callbacks);
-  Object.defineProperty(instance, "$sentinel", {
-    value: "store"
-  });
-  return instance;
-}
-
 // src/reactive/index.ts
 function reactive(value9) {
-  if (value9 == null || isReactive(value9)) {
+  if (isReactive(value9)) {
     return value9;
   }
   switch (true) {
     case Array.isArray(value9):
       return list(value9);
-    case isPlainObject(value9):
-      return store(value9);
     case typeof value9 === "function":
       return computed(value9);
-    case ["boolean", "number", "string"].includes(typeof value9):
+    case value9 == null:
+    case isPlainObject(value9):
+    case primitives.has(typeof value9):
       return signal(value9);
     default:
       return value9;
   }
 }
+var primitives = new Set(["boolean", "number", "string"]);
 export {
-  store,
   signal,
   reactive,
   list,
-  isStore,
   isSignal,
   isReactive,
   isList,

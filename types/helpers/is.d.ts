@@ -1,5 +1,4 @@
-import type { PlainObject } from '@oscarpalmer/atoms/models';
-import type { Computed, Effect, List, Signal, Store } from '../models';
+import type { Computed, Effect, List, ReactiveValue, Signal } from '../models';
 /**
  * Is the value a computed, reactive value?
  */
@@ -15,12 +14,8 @@ export declare function isList(value: unknown): value is List<unknown>;
 /**
  * Is the value a reactive value?
  */
-export declare function isReactive(value: unknown): value is Computed<unknown> | List<unknown> | Signal<unknown> | Store<PlainObject>;
+export declare function isReactive(value: unknown): value is ReactiveValue<unknown>;
 /**
  * Is the value a reactive value?
  */
 export declare function isSignal(value: unknown): value is Signal<unknown>;
-/**
- * Is the value a reactive store?
- */
-export declare function isStore(value: unknown): value is Store<PlainObject>;

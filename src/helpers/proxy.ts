@@ -1,17 +1,15 @@
-import type {ArrayOrPlainObject} from '@oscarpalmer/atoms/models';
 import type {ReactiveState, Signal} from '../models';
 import {emit} from './event';
 import {isReactive} from './is';
 import {arrayOperations, updateArray} from './value';
 
 export function getProxyValue(
-	reactive: ReactiveState<ArrayOrPlainObject>,
-	target: ArrayOrPlainObject,
+	reactive: ReactiveState<unknown[]>,
+	target: unknown[],
 	property: PropertyKey,
-	isArray: boolean,
-	length?: Signal<number>,
+	length: Signal<number>,
 ): unknown {
-	if (isArray && arrayOperations.has(property as never)) {
+	if (arrayOperations.has(property as never)) {
 		return updateArray(
 			reactive as ReactiveState<unknown[]>,
 			target as unknown[],
@@ -26,8 +24,8 @@ export function getProxyValue(
 }
 
 export function setProxyValue(
-	reactive: ReactiveState<ArrayOrPlainObject>,
-	target: ArrayOrPlainObject,
+	reactive: ReactiveState<unknown[]>,
+	target: unknown[],
 	property: PropertyKey,
 	value: unknown,
 	length?: Signal<number>,

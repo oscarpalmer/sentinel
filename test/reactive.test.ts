@@ -1,5 +1,5 @@
 import {expect, test} from 'bun:test';
-import {isComputed, isList, isSignal, isStore, reactive} from '../src';
+import {isComputed, isList, isReactive, isSignal, reactive} from '../src';
 
 test('reactive', () => {
 	const arr = reactive([]);
@@ -8,7 +8,7 @@ test('reactive', () => {
 	const com = reactive(() => sig.get() ** 2);
 
 	expect(isList(arr)).toBe(true);
-	expect(isStore(obj)).toBe(true);
+	expect(isSignal(obj)).toBe(true);
 	expect(isSignal(sig)).toBe(true);
 	expect(isComputed(com)).toBe(true);
 
@@ -21,6 +21,7 @@ test('reactive', () => {
 	expect(date).toBe(date);
 	expect(sym).toBe(sym);
 	expect(map).toBe(map);
-	expect(nil).toBe(null);
-	expect(und).toBe(undefined);
+
+	expect(isReactive(nil)).toBe(true);
+	expect(isReactive(und)).toBe(true);
 });

@@ -1,17 +1,7 @@
-import type { ArrayOrPlainObject } from '@oscarpalmer/atoms';
 /**
  * A computed, reactive value
  */
-export type Computed<Value> = {
-    /**
-     * Gets the value
-     */
-    get(): Value;
-    /**
-     * Gets the value without triggering reactivity
-     */
-    peek(): Value;
-} & ReactiveValue<Value>;
+export type Computed<Value> = ReactiveValue<Value>;
 /**
  * A reactive effect for changes in values
  */
@@ -44,42 +34,40 @@ export type List<Value> = {
      */
     at(index: number): Value | undefined;
     /**
+     * Gets the value
+     */
+    get(): Value[];
+    /**
+     * Gets the value for an index
+     */
+    get<Index extends keyof Value[]>(index: Index): Value[][Index];
+    get<Index extends keyof Value[]>(index?: Index): Value[] | Value[][Index];
+    /**
      * Calls a defined callback function on each value in the list, and returns a computed, reactive value that contains the results
      */
     map<Next>(callbackfn: (value: Value, index: number, array: Value[]) => Next): Computed<Next[]>;
+    /**
+     * Gets the value without triggering reactivity
+     */
+    peek(): Value[];
+    /**
+     * Gets the value for an index without triggering reactivity
+     */
+    peek<Index extends keyof Value[]>(index: Index): Value[][Index];
+    peek<Index extends keyof Value[]>(index?: Index): Value[] | Value[][Index];
     /**
      * Appends new values to the end of the list, and returns the new length of the list
      */
     push(...values: Value[]): number;
     /**
+     * Sets the value for an index
+     */
+    set<Index extends keyof Value[]>(index: Index, value: Value[][Index]): void;
+    /**
      * Removes values from the list and, if necessary, inserts new values in their place, returning the deleted values
      */
     splice(start: number, deleteCount?: number, ...values: Value[]): Value[];
-} & ReactiveObject<Value[]>;
-export type ReactiveObject<Model extends ArrayOrPlainObject> = {
-    /**
-     * Gets the value
-     */
-    get(): Model;
-    /**
-     * Gets the value for a key
-     */
-    get<Key extends keyof Model>(key: Key): Model[Key];
-    get<Key extends keyof Model>(key?: Key): Model | Model[Key];
-    /**
-     * Gets the value without triggering reactivity
-     */
-    peek(): Model;
-    /**
-     * Gets the value for a key without triggering reactivity
-     */
-    peek<Key extends keyof Model>(key: Key): Model[Key];
-    peek<Key extends keyof Model>(key?: Key): Model | Model[Key];
-    /**
-     * Sets the value for a key
-     */
-    set<Key extends keyof Model>(key: Key, value: Model[Key]): void;
-} & ReactiveValue<Model>;
+} & ReactiveValue<Value[]>;
 export type ReactiveState<Value> = {
     active: boolean;
     effects: Set<EffectState>;
@@ -87,6 +75,14 @@ export type ReactiveState<Value> = {
     value: Value;
 };
 export type ReactiveValue<Value> = {
+    /**
+     * Gets the value
+     */
+    get(): Value;
+    /**
+     * Gets the value without triggering reactivity
+     */
+    peek(): Value;
     /**
      * Starts reactivity for the value, if it was stopped
      */
@@ -115,14 +111,6 @@ export type ReactiveValue<Value> = {
 };
 export type Signal<Value> = {
     /**
-     * Gets the value
-     */
-    get(): Value;
-    /**
-     * Gets the value without triggering reactivity
-     */
-    peek(): Value;
-    /**
      * Sets the value
      */
     set(value: Value): void;
@@ -131,7 +119,6 @@ export type Signal<Value> = {
      */
     update(updater: (value: Value) => Value): void;
 } & ReactiveValue<Value>;
-export type Store<Model extends ArrayOrPlainObject> = ReactiveObject<Model>;
 /**
  * A subscriber for a reactive value, called when the value changes
  */
