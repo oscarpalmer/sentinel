@@ -2,7 +2,7 @@ import type {
 	Computed,
 	Effect,
 	List,
-	ReactiveValue,
+	Reactive,
 	Signal,
 } from '../models';
 
@@ -30,7 +30,7 @@ export function isList(value: unknown): value is List<unknown> {
 /**
  * Is the value a reactive value?
  */
-export function isReactive(value: unknown): value is ReactiveValue<unknown> {
+export function isReactive(value: unknown): value is Reactive {
 	return isSentinel(value, /^computed|list|signal|store$/i);
 }
 

@@ -76,6 +76,8 @@ export type List<Value> = {
 	splice(start: number, deleteCount?: number, ...values: Value[]): Value[];
 } & ReactiveValue<Value[]>;
 
+export type Reactive = ReactiveValue<unknown>;
+
 export type ReactiveState<Value> = {
 	active: boolean;
 	effects: Set<EffectState>;

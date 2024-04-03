@@ -1,4 +1,4 @@
-import type { Computed, Effect, List, ReactiveValue, Signal } from '../models';
+import type { Computed, Effect, List, Reactive, Signal } from '../models';
 /**
  * Is the value a computed, reactive value?
  */
@@ -14,7 +14,7 @@ export declare function isList(value: unknown): value is List<unknown>;
 /**
  * Is the value a reactive value?
  */
-export declare function isReactive(value: unknown): value is ReactiveValue<unknown>;
+export declare function isReactive(value: unknown): value is Reactive;
 /**
  * Is the value a reactive value?
  */
