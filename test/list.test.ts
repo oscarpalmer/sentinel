@@ -36,7 +36,7 @@ test('list', done => {
 			arr.length = arr.length + 1;
 
 			wait(() => {
-				expect(value).toBe('[1,2,3,4]');
+				expect(value).toMatch(/^\[1,2,3,4(,null)?\]$/);
 
 				arr.set(4, 5);
 

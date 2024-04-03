@@ -1,5 +1,5 @@
 import type {ArrayOrPlainObject} from '@oscarpalmer/atoms/models';
-import {createProxy} from '../helpers/proxy';
+import {getProxyValue, setProxyValue} from '../helpers/proxy';
 import {getValue} from '../helpers/value';
 import type {ReactiveObject, ReactiveState, Signal} from '../models';
 import {reactiveValue} from './value';
@@ -17,7 +17,20 @@ export function reactiveObject<Model extends ArrayOrPlainObject>(
 		(Array.isArray(value) ? [] : {}) as Model,
 	);
 
-	original.state.value = createProxy(original.state, value, length);
+	original.state.value = new Proxy(value, {
+		get(target, property) {
+			return getProxyValue(
+				original.state,
+				target,
+				property,
+				Array.isArray(target),
+				length,
+			);
+		},
+		set(target, property, value) {
+			return setProxyValue(original.state, target, property, value, length);
+		},
+	});
 
 	function get(property: unknown) {
 		return property == null

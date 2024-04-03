@@ -3,16 +3,7 @@ import type {ArrayOrPlainObject} from '@oscarpalmer/atoms';
 /**
  * A computed, reactive value
  */
-export type Computed<Value> = {
-	/**
-	 * Gets the value
-	 */
-	get(): Value;
-	/**
-	 * Gets the value without triggering reactivity
-	 */
-	peek(): Value;
-} & ReactiveValue<Value>;
+export type Computed<Value> = ReactiveValue<Value>;
 
 /**
  * A reactive effect for changes in values
@@ -97,6 +88,14 @@ export type ReactiveState<Value> = {
 
 export type ReactiveValue<Value> = {
 	/**
+	 * Gets the value
+	 */
+	get(): Value;
+	/**
+	 * Gets the value without triggering reactivity
+	 */
+	peek(): Value;
+	/**
 	 * Starts reactivity for the value, if it was stopped
 	 */
 	run(): void;
@@ -124,14 +123,6 @@ export type ReactiveValue<Value> = {
 };
 
 export type Signal<Value> = {
-	/**
-	 * Gets the value
-	 */
-	get(): Value;
-	/**
-	 * Gets the value without triggering reactivity
-	 */
-	peek(): Value;
 	/**
 	 * Sets the value
 	 */

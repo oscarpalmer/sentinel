@@ -215,9 +215,6 @@ function computed(value4) {
   return instance;
 }
 // node_modules/@oscarpalmer/atoms/dist/js/is.mjs
-var isArrayOrPlainObject = function(value4) {
-  return Array.isArray(value4) || isPlainObject(value4);
-};
 var isPlainObject = function(value4) {
   if (typeof value4 !== "object" || value4 === null) {
     return false;
@@ -227,33 +224,18 @@ var isPlainObject = function(value4) {
 };
 
 // src/helpers/proxy.ts
-function createProxy(reactive, value5, length) {
-  const isArray = Array.isArray(value5);
-  const proxied = new Proxy(isArray ? value5 : {}, {
-    get: (target, property) => getProxyValue(reactive, target, property, isArray),
-    set: (target, property, value6) => setProxyValue(reactive, target, property, value6, length)
-  });
-  if (!isArray) {
-    const keys = Object.keys(value5);
-    const size = keys.length;
-    let index = 0;
-    for (;index < size; index += 1) {
-      const key = keys[index];
-      proxied[key] = value5[key];
-    }
-  }
-  return proxied;
-}
 function getProxyValue(reactive, target, property, isArray, length) {
-  return isArray && arrayOperations.has(property) ? updateArray(reactive, target, property, length) : Reflect.get(target, property);
+  if (isArray && arrayOperations.has(property)) {
+    return updateArray(reactive, target, property, length);
+  }
+  const value5 = Reflect.get(target, property);
+  return isReactive(value5) ? value5.get() : value5;
 }
 function setProxyValue(reactive, target, property, value5, length) {
-  const previous = Reflect.get(target, property);
-  if (Object.is(previous, value5)) {
+  if (Object.is(Reflect.get(target, property), value5)) {
     return true;
   }
-  const next = length != null && isArrayOrPlainObject(value5) ? createProxy(reactive, value5) : value5;
-  const result = Reflect.set(target, property, next);
+  const result = Reflect.set(target, property, value5);
   if (result) {
     emit(reactive);
     length?.set(target.length);
@@ -264,7 +246,14 @@ function setProxyValue(reactive, target, property, value5, length) {
 // src/reactive/object.ts
 function reactiveObject(value7, length) {
   const original = reactiveValue(Array.isArray(value7) ? [] : {});
-  original.state.value = createProxy(original.state, value7, length);
+  original.state.value = new Proxy(value7, {
+    get(target, property) {
+      return getProxyValue(original.state, target, property, Array.isArray(target), length);
+    },
+    set(target, property, value8) {
+      return setProxyValue(original.state, target, property, value8, length);
+    }
+  });
   function get(property) {
     return property == null ? getValue(original.state) : original.state.value[property];
   }
@@ -319,15 +308,17 @@ function list(value9) {
       return original.state.value.splice(start, deleteCount ?? 0, ...values);
     }
   });
-  Object.defineProperty(instance, "$sentinel", {
-    value: "list"
-  });
-  Object.defineProperty(instance, "length", {
-    get() {
-      return length.get();
+  Object.defineProperties(instance, {
+    $sentinel: {
+      value: "list"
     },
-    set(value10) {
-      original.state.value.length = value10 < 0 ? 0 : value10;
+    length: {
+      get() {
+        return length.get();
+      },
+      set(value10) {
+        original.state.value.length = value10 < 0 ? 0 : value10;
+      }
     }
   });
   return instance;

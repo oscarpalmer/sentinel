@@ -25,16 +25,17 @@ export function list<Value>(value: Value[]): List<Value> {
 		},
 	});
 
-	Object.defineProperty(instance, '$sentinel', {
-		value: 'list',
-	});
-
-	Object.defineProperty(instance, 'length', {
-		get() {
-			return length.get();
+	Object.defineProperties(instance, {
+		$sentinel: {
+			value: 'list',
 		},
-		set(value: number) {
-			original.state.value.length = value < 0 ? 0 : value;
+		length: {
+			get() {
+				return length.get();
+			},
+			set(value) {
+				original.state.value.length = value < 0 ? 0 : value;
+			},
 		},
 	});
 
