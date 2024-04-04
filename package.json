@@ -9,7 +9,7 @@
 	"description": "",
 	"devDependencies": {
 		"@biomejs/biome": "^1.6",
-		"@happy-dom/global-registrator": "^14.3",
+		"@happy-dom/global-registrator": "^14.4",
 		"@types/bun": "^1.0",
 		"bun": "^1.1",
 		"typescript": "^5.4"
@@ -43,5 +43,5 @@
 	},
 	"type": "module",
 	"types": "./types/index.d.ts",
-	"version": "0.18.1"
+	"version": "0.18.2"
 }

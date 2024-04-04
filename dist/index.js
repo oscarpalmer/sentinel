@@ -281,7 +281,7 @@ function list(value9) {
       return property == null ? getValue(original.state) : original.state.value[property];
     },
     map(callbackfn) {
-      return computed(() => original.state.value.map(callbackfn));
+      return computed(() => getValue(original.state).map(callbackfn));
     },
     peek(property) {
       return property == null ? original.state.value : original.state.value[property];

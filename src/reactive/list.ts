@@ -37,7 +37,7 @@ export function list<Value>(value: Value[]): List<Value> {
 		map<Next>(
 			callbackfn: (value: Value, index: number, array: Value[]) => Next,
 		): Computed<Next[]> {
-			return computed(() => original.state.value.map(callbackfn));
+			return computed(() => getValue(original.state).map(callbackfn));
 		},
 		peek(property: unknown) {
 			return property == null
