@@ -11,7 +11,7 @@ var queue = function(callback) {
     });
   }
 };
-if (globalThis._atomic_queued === undefined) {
+if (globalThis._atomic_queued == null) {
   const queued = new Set;
   Object.defineProperty(globalThis, "_atomic_queued", {
     get() {
@@ -275,10 +275,29 @@ function list(value9) {
   const instance = Object.create({
     ...original.callbacks,
     at(index) {
-      return original.state.value.at(index);
+      return getValue(original.state).at(index);
+    },
+    filter(callbackFn) {
+      return computed(() => getValue(original.state).filter(callbackFn));
+    },
+    find(callbackFn) {
+      return getValue(original.state).find(callbackFn);
+    },
+    findIndex(callbackFn) {
+      return getValue(original.state).findIndex(callbackFn);
     },
     get(property) {
       return property == null ? getValue(original.state) : original.state.value[property];
+    },
+    includes(searchElement, fromIndex) {
+      return getValue(original.state).includes(searchElement, fromIndex);
+    },
+    indexOf(searchElement, fromIndex) {
+      return getValue(original.state).indexOf(searchElement, fromIndex);
+    },
+    insert(index, ...value10) {
+      original.state.value.splice(index, 0, ...value10);
+      return length.peek();
     },
     map(callbackfn) {
       return computed(() => getValue(original.state).map(callbackfn));
@@ -286,14 +305,24 @@ function list(value9) {
     peek(property) {
       return property == null ? original.state.value : original.state.value[property];
     },
+    pop() {
+      return original.state.value.pop();
+    },
     push(...values) {
       return original.state.value.push(...values);
     },
-    set(property, value10) {
-      original.state.value[property] = value10;
+    set(first, second) {
+      const isArray = Array.isArray(first);
+      original.state.value.splice(isArray ? 0 : first, isArray ? original.state.value.length : 1, ...isArray ? first : [second]);
+    },
+    shift() {
+      return original.state.value.shift();
     },
     splice(start, deleteCount, ...values) {
       return original.state.value.splice(start, deleteCount ?? 0, ...values);
+    },
+    unshift(...values) {
+      return original.state.value.unshift(...values);
     }
   });
   Object.defineProperties(instance, {

@@ -2,11 +2,7 @@ import {expect, test} from 'bun:test';
 import {wait} from '@oscarpalmer/atoms/timer';
 import {effect, signal} from '../src';
 
-test('signal', done => {
-	function subscriber(value: string): void {
-		valueFromSubscriber = value;
-	}
-
+test('value', () => {
 	const sig = signal('signal');
 
 	expect(sig.get()).toBe('signal');
@@ -14,41 +10,80 @@ test('signal', done => {
 	expect(sig.toJSON()).toBe('signal');
 	expect(sig.toString()).toBe('signal');
 
-	let valueFromEffect: unknown = undefined;
-	let valueFromSubscriber: unknown = undefined;
+	sig.set('signal!');
+
+	expect(sig.get()).toBe('signal!');
+	expect(sig.peek()).toBe('signal!');
+	expect(sig.toJSON()).toBe('signal!');
+	expect(sig.toString()).toBe('signal!');
+
+	sig.update(value => `${value}!!`);
+
+	expect(sig.get()).toBe('signal!!!');
+	expect(sig.peek()).toBe('signal!!!');
+	expect(sig.toJSON()).toBe('signal!!!');
+	expect(sig.toString()).toBe('signal!!!');
+});
+
+test('effected', done => {
+	const sig = signal('signal');
+
+	let value: unknown = undefined;
 
 	effect(() => {
-		valueFromEffect = sig.get();
+		value = sig.get();
 	});
 
-	const unsub = sig.subscribe(subscriber);
-
-	expect(valueFromEffect).toBe('signal');
-	expect(valueFromSubscriber).toBe(valueFromEffect);
+	expect(value).toBe('signal');
 
 	sig.stop();
 	sig.stop();
-
-	unsub();
-
-	sig.unsubscribe(subscriber);
 
 	sig.set(`${sig}!`);
 	sig.set(sig.peek());
 
 	wait(() => {
-		expect(valueFromEffect).toBe('signal');
-		expect(valueFromSubscriber).toBe(valueFromEffect);
+		expect(value).toBe('signal');
 
 		sig.run();
 		sig.run();
 
-		sig.subscribe(subscriber);
+		wait(() => {
+			expect(value).toBe('signal!');
+
+			done();
+		});
+	});
+});
+
+test('subscribed', done => {
+	function subscriber(v: unknown) {
+		value = v;
+	}
+
+	const sig = signal('signal');
+
+	let value: unknown = undefined;
+
+	const unsub = sig.subscribe(subscriber);
+
+	expect(value).toBe('signal');
+
+	sig.stop();
+	sig.stop();
+
+	unsub();
+	sig.unsubscribe(subscriber);
+
+	sig.set('signal!');
+
+	wait(() => {
+		expect(value).toBe('signal');
+
 		sig.subscribe(subscriber);
 
 		wait(() => {
-			expect(valueFromEffect).toBe('signal!');
-			expect(valueFromSubscriber).toBe(valueFromEffect);
+			expect(value).toBe('signal!');
 
 			done();
 		});

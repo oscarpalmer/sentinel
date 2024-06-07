@@ -5,8 +5,6 @@ import {computed} from './computed';
 import {list} from './list';
 import {signal} from './signal';
 
-type Primitive = boolean | number | string;
-
 const primitives = new Set(['boolean', 'number', 'string']);
 
 /**

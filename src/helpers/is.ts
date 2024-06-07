@@ -35,7 +35,9 @@ export function isReactive(value: unknown): value is Reactive {
 }
 
 function isSentinel(value: unknown, expression: RegExp): boolean {
-	return expression.test((value as any)?.$sentinel ?? '');
+	return expression.test(
+		(value as unknown as {$sentinel: string})?.$sentinel ?? '',
+	);
 }
 
 /**
