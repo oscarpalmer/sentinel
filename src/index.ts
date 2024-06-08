@@ -12,4 +12,3 @@ export {array} from './reactive/array';
 export {computed} from './reactive/computed';
 export {reactive} from './reactive/index';
 export {signal} from './reactive/signal';
-

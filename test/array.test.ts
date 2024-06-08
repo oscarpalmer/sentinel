@@ -9,6 +9,10 @@ test('value', () => {
 	expect(JSON.stringify(arr.peek())).toBe('[1,2,3]');
 	expect(JSON.stringify(arr.toJSON())).toBe('[1,2,3]');
 	expect(arr.toString()).toBe('1,2,3');
+});
+
+test('keyed', () => {
+	const arr = array([1, 2, 3]);
 
 	expect(arr.get(0)).toBe(1);
 	expect(arr.get(-1)).toBe(3);

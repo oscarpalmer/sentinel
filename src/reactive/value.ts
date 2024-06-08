@@ -6,8 +6,11 @@ export function reactiveValue<Value>(value: Value) {
 	const state: ReactiveState<Value> = {
 		value,
 		active: true,
-		effects: new Set(),
-		subscribers: new Map(),
+		callbacks: {
+			any: new Set(),
+			keys: new Set(),
+			values: new Map(),
+		},
 	};
 
 	const callbacks = {
@@ -36,23 +39,23 @@ export function reactiveValue<Value>(value: Value) {
 		},
 
 		subscribe(subscriber: Subscriber<Value>): Unsubscriber {
-			const {subscribers, value} = state;
+			const {callbacks, value} = state;
 
-			if (subscribers.has(subscriber)) {
+			if (callbacks.any.has(subscriber)) {
 				return () => {};
 			}
 
-			subscribers.set(subscriber, () => subscriber(value));
+			callbacks.any.add(subscriber);
 
 			subscriber(value);
 
 			return () => {
-				state.subscribers.delete(subscriber);
+				state.callbacks.any.delete(subscriber);
 			};
 		},
 
 		unsubscribe(subscriber: Subscriber<Value>): void {
-			state.subscribers.delete(subscriber);
+			state.callbacks.any.delete(subscriber);
 		},
 	};
 

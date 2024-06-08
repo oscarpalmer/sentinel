@@ -37,7 +37,12 @@ export function setProxyValue(
 	const result = Reflect.set(target, property, value);
 
 	if (result) {
-		emit(reactive);
+		emit(
+			reactive,
+			typeof property === 'string' && /^\d+$/.test(property)
+				? [Number.parseInt(property, 10)]
+				: undefined,
+		);
 
 		length?.set((target as unknown[]).length);
 	}

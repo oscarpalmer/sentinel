@@ -1,3 +1,4 @@
+import type {Key} from '@oscarpalmer/atoms/models';
 import type {Effect, EffectState, ReactiveState} from './models';
 
 /**
@@ -28,7 +29,11 @@ export function effect(callback: () => void): Effect {
 				state.active = false;
 
 				for (const reactive of state.reactives) {
-					reactive.effects.delete(state);
+					reactive.callbacks.any.delete(state);
+
+					for (const [, keyed] of reactive.callbacks.values) {
+						keyed.delete(state);
+					}
 				}
 
 				state.reactives.clear();
@@ -45,13 +50,23 @@ export function effect(callback: () => void): Effect {
 	return instance;
 }
 
-export function watch<Value>(reactive: ReactiveState<Value>): void {
+export function watch<Value>(reactive: ReactiveState<Value>, key?: Key): void {
 	const effect = globalThis._sentinels[
 		globalThis._sentinels.length - 1
 	] as EffectState;
 
 	if (effect != null) {
-		reactive.effects.add(effect);
+		if (key == null) {
+			reactive.callbacks.any.add(effect);
+		} else {
+			if (!reactive.callbacks.keys.has(key)) {
+				reactive.callbacks.keys.add(key);
+				reactive.callbacks.values.set(key, new Set());
+			}
+
+			reactive.callbacks.values.get(key)?.add(effect);
+		}
+
 		effect.reactives.add(reactive as never);
 	}
 }

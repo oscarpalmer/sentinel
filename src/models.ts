@@ -1,3 +1,5 @@
+import type {Key} from '@oscarpalmer/atoms/models';
+
 /**
  * A computed, reactive value
  */
@@ -71,9 +73,9 @@ export type ReactiveArray<Value> = {
 	 */
 	push(...values: Value[]): number;
 	/**
-	 * Sets the value
+	 * Sets the value _(and returns the previous value)_
 	 */
-	set(value: Value[]): void;
+	set(value: Value[]): Value[];
 	/**
 	 * Sets the value for an index
 	 */
@@ -84,10 +86,15 @@ export type ReactiveArray<Value> = {
 	splice(start: number, deleteCount?: number, ...values: Value[]): Value[];
 } & ReactiveValue<Value[]>;
 
+type ReactiveCallbacks<Value> = {
+	any: Set<EffectState | Subscriber<Value>>;
+	keys: Set<Key>;
+	values: Map<Key, Set<EffectState | Subscriber<Value>>>;
+};
+
 export type ReactiveState<Value> = {
 	active: boolean;
-	effects: Set<EffectState>;
-	subscribers: Map<Subscriber<Value>, () => void>;
+	callbacks: ReactiveCallbacks<Value>;
 	value: Value;
 };
 

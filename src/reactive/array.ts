@@ -34,7 +34,7 @@ export function array<Value>(value: Value[]): ReactiveArray<Value> {
 		get(property: unknown) {
 			return property == null
 				? getValue(original.state)
-				: original.state.value.at(property as never);
+				: getValue(original.state, property as never);
 		},
 		insert(index: number, ...value: Value[]) {
 			original.state.value.splice(index, 0, ...value);
@@ -55,13 +55,15 @@ export function array<Value>(value: Value[]): ReactiveArray<Value> {
 			return original.state.value.push(...values);
 		},
 		set(first: unknown, second: unknown) {
-			const isArray = Array.isArray(first);
+			if (Array.isArray(first)) {
+				return original.state.value.splice(
+					0,
+					original.state.value.length,
+					...first,
+				);
+			}
 
-			original.state.value.splice(
-				isArray ? 0 : (first as never),
-				isArray ? original.state.value.length : 1,
-				...(isArray ? first : [second]),
-			);
+			original.state.value[first as never] = second as never;
 		},
 		splice(start: number, deleteCount?: number, ...values: Value[]): Value[] {
 			return original.state.value.splice(start, deleteCount ?? 0, ...values);

@@ -50,7 +50,10 @@ function effect(callback) {
       if (state.active) {
         state.active = false;
         for (const reactive of state.reactives) {
-          reactive.effects.delete(state);
+          reactive.callbacks.any.delete(state);
+          for (const [, keyed] of reactive.callbacks.values) {
+            keyed.delete(state);
+          }
         }
         state.reactives.clear();
       }
@@ -62,10 +65,18 @@ function effect(callback) {
   instance.start();
   return instance;
 }
-function watch(reactive) {
+function watch(reactive, key) {
   const effect2 = globalThis._sentinels[globalThis._sentinels.length - 1];
   if (effect2 != null) {
-    reactive.effects.add(effect2);
+    if (key == null) {
+      reactive.callbacks.any.add(effect2);
+    } else {
+      if (!reactive.callbacks.keys.has(key)) {
+        reactive.callbacks.keys.add(key);
+        reactive.callbacks.values.set(key, new Set);
+      }
+      reactive.callbacks.values.get(key)?.add(effect2);
+    }
     effect2.reactives.add(reactive);
   }
 }
@@ -92,17 +103,37 @@ function isSignal(value) {
 function disable(state) {
   if (state.active) {
     state.active = false;
-    for (const effect2 of state.effects) {
-      effect2.reactives.delete(state);
+    for (const callback of state.callbacks.any) {
+      if (typeof callback !== "function") {
+        callback.reactives.delete(state);
+      }
+    }
+    for (const [, callback] of state.callbacks.values) {
+      for (const value of callback) {
+        if (typeof value !== "function") {
+          value.reactives.delete(state);
+        }
+      }
     }
   }
 }
-function emit(state) {
+function emit(state, keys) {
   if (state.active) {
-    const { effects, subscribers } = state;
-    const callbacks = [...effects, ...subscribers.values()].map((value) => typeof value === "function" ? value : value.callback);
+    const keyed = [];
+    for (const [key, value] of state.callbacks.values) {
+      if (keys == null || keys.includes(key)) {
+        keyed.push(...value);
+      }
+    }
+    const callbacks = [...state.callbacks.any, ...keyed].map((value) => typeof value === "function" ? value : value.callback);
     for (const callback of callbacks) {
-      queue(callback);
+      if (typeof callback === "function") {
+        queue(() => {
+          callback(state.value);
+        });
+      } else {
+        queue(callback);
+      }
     }
   }
 }
@@ -114,9 +145,9 @@ function enable(state) {
 }
 
 // src/helpers/value.ts
-function getValue(reactive) {
-  watch(reactive);
-  return reactive.value;
+function getValue(reactive, key) {
+  watch(reactive, typeof key === "symbol" ? undefined : key);
+  return key == null ? reactive.value : Array.isArray(reactive.value) ? reactive.value.at(key) : reactive.value[key];
 }
 function setValue(reactive, value) {
   if (!Object.is(reactive.value, value)) {
@@ -125,9 +156,19 @@ function setValue(reactive, value) {
   }
 }
 function updateArray(reactive, array, operation, length) {
+  const previous = array.slice();
   return (...args) => {
     const result = array[operation](...args);
-    emit(reactive);
+    let changed;
+    if (reactive.callbacks.keys.size > 0) {
+      changed = [];
+      for (const key of reactive.callbacks.keys) {
+        if (typeof key === "number" && !Object.is(previous.at(key), array.at(key))) {
+          changed.push(key);
+        }
+      }
+    }
+    emit(reactive, changed);
     length?.set(array.length);
     return result;
   };
@@ -158,7 +199,7 @@ function setProxyValue(reactive, target, property, value2, length) {
   }
   const result = Reflect.set(target, property, value2);
   if (result) {
-    emit(reactive);
+    emit(reactive, typeof property === "string" && /^\d+$/.test(property) ? [Number.parseInt(property, 10)] : undefined);
     length?.set(target.length);
   }
   return result;
@@ -169,8 +210,11 @@ function reactiveValue(value3) {
   const state = {
     value: value3,
     active: true,
-    effects: new Set,
-    subscribers: new Map
+    callbacks: {
+      any: new Set,
+      keys: new Set,
+      values: new Map
+    }
   };
   const callbacks = {
     get() {
@@ -192,19 +236,19 @@ function reactiveValue(value3) {
       disable(state);
     },
     subscribe(subscriber) {
-      const { subscribers, value: value4 } = state;
-      if (subscribers.has(subscriber)) {
+      const { callbacks: callbacks2, value: value4 } = state;
+      if (callbacks2.any.has(subscriber)) {
         return () => {
         };
       }
-      subscribers.set(subscriber, () => subscriber(value4));
+      callbacks2.any.add(subscriber);
       subscriber(value4);
       return () => {
-        state.subscribers.delete(subscriber);
+        state.callbacks.any.delete(subscriber);
       };
     },
     unsubscribe(subscriber) {
-      state.subscribers.delete(subscriber);
+      state.callbacks.any.delete(subscriber);
     }
   };
   return {
@@ -270,7 +314,7 @@ function array(value9) {
       return computed(() => getValue(original.state).filter(callbackFn));
     },
     get(property) {
-      return property == null ? getValue(original.state) : original.state.value.at(property);
+      return property == null ? getValue(original.state) : getValue(original.state, property);
     },
     insert(index, ...value10) {
       original.state.value.splice(index, 0, ...value10);
@@ -286,8 +330,10 @@ function array(value9) {
       return original.state.value.push(...values);
     },
     set(first, second) {
-      const isArray2 = Array.isArray(first);
-      original.state.value.splice(isArray2 ? 0 : first, isArray2 ? original.state.value.length : 1, ...isArray2 ? first : [second]);
+      if (Array.isArray(first)) {
+        return original.state.value.splice(0, original.state.value.length, ...first);
+      }
+      original.state.value[first] = second;
     },
     splice(start, deleteCount, ...values) {
       return original.state.value.splice(start, deleteCount ?? 0, ...values);
