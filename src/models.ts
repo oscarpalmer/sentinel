@@ -23,7 +23,9 @@ export type EffectState = {
 	reactives: Set<ReactiveState<unknown>>;
 };
 
-export type List<Value> = {
+export type Reactive = ReactiveValue<unknown>;
+
+export type ReactiveArray<Value> = {
 	/**
 	 * Get the length of the list
 	 */
@@ -33,27 +35,11 @@ export type List<Value> = {
 	 */
 	set length(value: number);
 	/**
-	 * Gets the value at a specific index
-	 */
-	at(index: number): Value | undefined;
-	/**
 	 * Calls a callback function on each value in the list, and returns a computed, reactive value that contains the results
 	 */
 	filter(
 		callbackFn: (value: Value, index: number, array: Value[]) => boolean,
 	): Computed<Value[]>;
-	/**
-	 * Finds a value in the list, and returns it _(or `undefined` if not found)_
-	 */
-	find(
-		callbackFn: (value: Value, index: number, array: Value[]) => boolean,
-	): Value | undefined;
-	/**
-	 * Finds the index of a value in the list, and returns it _(or `-1` if not found)_
-	 */
-	findIndex(
-		callbackFn: (value: Value, index: number, array: Value[]) => boolean,
-	): number;
 	/**
 	 * Gets the value
 	 */
@@ -62,14 +48,6 @@ export type List<Value> = {
 	 * Gets the value for an index
 	 */
 	get<Index extends keyof Value[]>(index: Index): Value[][Index];
-	/**
-	 * Determines whether a value is included in the list
-	 */
-	includes(searchElement: Value, fromIndex?: number): boolean;
-	/**
-	 * Finds the index of a value in the list, and returns it _(or `-1` if not found)_
-	 */
-	indexOf(searchElement: Value, fromIndex?: number): number;
 	/**
 	 * Inserts values at a specific index, and returns the new length of the list
 	 */
@@ -89,10 +67,6 @@ export type List<Value> = {
 	 */
 	peek<Index extends keyof Value[]>(index: Index): Value[][Index];
 	/**
-	 * Removes the last value from the list, and returns it
-	 */
-	pop(): Value | undefined;
-	/**
 	 * Appends new values to the end of the list, and returns the new length of the list
 	 */
 	push(...values: Value[]): number;
@@ -105,20 +79,10 @@ export type List<Value> = {
 	 */
 	set<Index extends keyof Value[]>(index: Index, value: Value[][Index]): void;
 	/**
-	 * Removes the first value from the list, and returns it
-	 */
-	shift(): Value | undefined;
-	/**
 	 * Removes values from the list and, if necessary, inserts new values in their place, returning the deleted values
 	 */
 	splice(start: number, deleteCount?: number, ...values: Value[]): Value[];
-	/**
-	 * Adds new values to the beginning of the list, and returns the new length of the list
-	 */
-	unshift(...values: Value[]): number;
 } & ReactiveValue<Value[]>;
-
-export type Reactive = ReactiveValue<unknown>;
 
 export type ReactiveState<Value> = {
 	active: boolean;

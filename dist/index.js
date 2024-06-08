@@ -70,17 +70,17 @@ function watch(reactive) {
   }
 }
 // src/helpers/is.ts
+function isArray(value) {
+  return isSentinel(value, /^array$/i);
+}
 function isComputed(value) {
   return isSentinel(value, /^computed$/i);
 }
 function isEffect(value) {
   return isSentinel(value, /^effect$/i);
 }
-function isList(value) {
-  return isSentinel(value, /^list$/i);
-}
 function isReactive(value) {
-  return isSentinel(value, /^computed|list|signal|store$/i);
+  return isSentinel(value, /^array|computed|signal|store$/i);
 }
 var isSentinel = function(value, expression) {
   return expression.test(value?.$sentinel ?? "");
@@ -144,10 +144,30 @@ var arrayOperations = new Set([
   "unshift"
 ]);
 
+// src/helpers/proxy.ts
+function getProxyValue(reactive, target, property, length) {
+  if (arrayOperations.has(property)) {
+    return updateArray(reactive, target, property, length);
+  }
+  const value2 = Reflect.get(target, property);
+  return isReactive(value2) ? value2.get() : value2;
+}
+function setProxyValue(reactive, target, property, value2, length) {
+  if (Object.is(Reflect.get(target, property), value2)) {
+    return true;
+  }
+  const result = Reflect.set(target, property, value2);
+  if (result) {
+    emit(reactive);
+    length?.set(target.length);
+  }
+  return result;
+}
+
 // src/reactive/value.ts
-function reactiveValue(value2) {
+function reactiveValue(value3) {
   const state = {
-    value: value2,
+    value: value3,
     active: true,
     effects: new Set,
     subscribers: new Map
@@ -172,13 +192,13 @@ function reactiveValue(value2) {
       disable(state);
     },
     subscribe(subscriber) {
-      const { subscribers, value: value3 } = state;
+      const { subscribers, value: value4 } = state;
       if (subscribers.has(subscriber)) {
         return () => {
         };
       }
-      subscribers.set(subscriber, () => subscriber(value3));
-      subscriber(value3);
+      subscribers.set(subscriber, () => subscriber(value4));
+      subscriber(value4);
       return () => {
         state.subscribers.delete(subscriber);
       };
@@ -194,9 +214,9 @@ function reactiveValue(value2) {
 }
 
 // src/reactive/computed.ts
-function computed(value4) {
+function computed(value5) {
   const original = reactiveValue(undefined);
-  const fx = effect(() => setValue(original.state, value4()));
+  const fx = effect(() => setValue(original.state, value5()));
   const instance = Object.create({
     ...original.callbacks,
     run() {
@@ -210,34 +230,6 @@ function computed(value4) {
     value: "computed"
   });
   return instance;
-}
-// node_modules/@oscarpalmer/atoms/dist/js/is.mjs
-var isPlainObject = function(value4) {
-  if (typeof value4 !== "object" || value4 === null) {
-    return false;
-  }
-  const prototype = Object.getPrototypeOf(value4);
-  return (prototype === null || prototype === Object.prototype || Object.getPrototypeOf(prototype) === null) && !(Symbol.toStringTag in value4) && !(Symbol.iterator in value4);
-};
-
-// src/helpers/proxy.ts
-function getProxyValue(reactive, target, property, length) {
-  if (arrayOperations.has(property)) {
-    return updateArray(reactive, target, property, length);
-  }
-  const value5 = Reflect.get(target, property);
-  return isReactive(value5) ? value5.get() : value5;
-}
-function setProxyValue(reactive, target, property, value5, length) {
-  if (Object.is(Reflect.get(target, property), value5)) {
-    return true;
-  }
-  const result = Reflect.set(target, property, value5);
-  if (result) {
-    emit(reactive);
-    length?.set(target.length);
-  }
-  return result;
 }
 
 // src/reactive/signal.ts
@@ -260,8 +252,8 @@ function signal(value7) {
   return instance;
 }
 
-// src/reactive/list.ts
-function list(value9) {
+// src/reactive/array.ts
+function array(value9) {
   const length = signal(value9.length);
   const original = reactiveValue([]);
   original.state.value = new Proxy(value9, {
@@ -274,26 +266,11 @@ function list(value9) {
   });
   const instance = Object.create({
     ...original.callbacks,
-    at(index) {
-      return getValue(original.state).at(index);
-    },
     filter(callbackFn) {
       return computed(() => getValue(original.state).filter(callbackFn));
     },
-    find(callbackFn) {
-      return getValue(original.state).find(callbackFn);
-    },
-    findIndex(callbackFn) {
-      return getValue(original.state).findIndex(callbackFn);
-    },
     get(property) {
-      return property == null ? getValue(original.state) : original.state.value[property];
-    },
-    includes(searchElement, fromIndex) {
-      return getValue(original.state).includes(searchElement, fromIndex);
-    },
-    indexOf(searchElement, fromIndex) {
-      return getValue(original.state).indexOf(searchElement, fromIndex);
+      return property == null ? getValue(original.state) : original.state.value.at(property);
     },
     insert(index, ...value10) {
       original.state.value.splice(index, 0, ...value10);
@@ -303,31 +280,22 @@ function list(value9) {
       return computed(() => getValue(original.state).map(callbackfn));
     },
     peek(property) {
-      return property == null ? original.state.value : original.state.value[property];
-    },
-    pop() {
-      return original.state.value.pop();
+      return property == null ? original.state.value : original.state.value.at(property);
     },
     push(...values) {
       return original.state.value.push(...values);
     },
     set(first, second) {
-      const isArray = Array.isArray(first);
-      original.state.value.splice(isArray ? 0 : first, isArray ? original.state.value.length : 1, ...isArray ? first : [second]);
-    },
-    shift() {
-      return original.state.value.shift();
+      const isArray2 = Array.isArray(first);
+      original.state.value.splice(isArray2 ? 0 : first, isArray2 ? original.state.value.length : 1, ...isArray2 ? first : [second]);
     },
     splice(start, deleteCount, ...values) {
       return original.state.value.splice(start, deleteCount ?? 0, ...values);
-    },
-    unshift(...values) {
-      return original.state.value.unshift(...values);
     }
   });
   Object.defineProperties(instance, {
     $sentinel: {
-      value: "list"
+      value: "array"
     },
     length: {
       get() {
@@ -340,6 +308,14 @@ function list(value9) {
   });
   return instance;
 }
+// node_modules/@oscarpalmer/atoms/dist/js/is.mjs
+var isPlainObject = function(value9) {
+  if (typeof value9 !== "object" || value9 === null) {
+    return false;
+  }
+  const prototype = Object.getPrototypeOf(value9);
+  return (prototype === null || prototype === Object.prototype || Object.getPrototypeOf(prototype) === null) && !(Symbol.toStringTag in value9) && !(Symbol.iterator in value9);
+};
 
 // src/reactive/index.ts
 function reactive(value9) {
@@ -348,7 +324,7 @@ function reactive(value9) {
   }
   switch (true) {
     case Array.isArray(value9):
-      return list(value9);
+      return array(value9);
     case typeof value9 === "function":
       return computed(value9);
     case value9 == null:
@@ -363,12 +339,12 @@ var primitives = new Set(["boolean", "number", "string"]);
 export {
   signal,
   reactive,
-  list,
   isSignal,
   isReactive,
-  isList,
   isEffect,
   isComputed,
+  isArray,
   effect,
-  computed
+  computed,
+  array
 };

@@ -1,14 +1,15 @@
 import './global';
 export {effect} from './effect';
 export {
+	isArray,
 	isComputed,
 	isEffect,
-	isList,
 	isReactive,
 	isSignal,
 } from './helpers/is';
-export type {Computed, Effect, List, Reactive, Signal} from './models';
+export type {Computed, Effect, Reactive, ReactiveArray, Signal} from './models';
+export {array} from './reactive/array';
 export {computed} from './reactive/computed';
 export {reactive} from './reactive/index';
-export {list} from './reactive/list';
 export {signal} from './reactive/signal';
+

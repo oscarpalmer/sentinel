@@ -1,8 +1,8 @@
-import type { Computed, List, Signal } from '../models';
+import type { Computed, ReactiveArray, Signal } from '../models';
 /**
- * Creates a reactive list
+ * Creates a reactive array
  */
-export declare function reactive<Model extends unknown[]>(value: Model): List<Model>;
+export declare function reactive<Model extends unknown[]>(value: Model): ReactiveArray<Model>;
 /**
  * Creates a computed, reactive value
  */

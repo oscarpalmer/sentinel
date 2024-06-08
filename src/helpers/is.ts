@@ -1,10 +1,17 @@
 import type {
 	Computed,
 	Effect,
-	List,
 	Reactive,
+	ReactiveArray,
 	Signal,
 } from '../models';
+
+/**
+ * Is the value a reactive array?
+ */
+export function isArray(value: unknown): value is ReactiveArray<unknown> {
+	return isSentinel(value, /^array$/i);
+}
 
 /**
  * Is the value a computed, reactive value?
@@ -21,17 +28,10 @@ export function isEffect(value: unknown): value is Effect {
 }
 
 /**
- * Is the value a reactive list?
- */
-export function isList(value: unknown): value is List<unknown> {
-	return isSentinel(value, /^list$/i);
-}
-
-/**
  * Is the value a reactive value?
  */
 export function isReactive(value: unknown): value is Reactive {
-	return isSentinel(value, /^computed|list|signal|store$/i);
+	return isSentinel(value, /^array|computed|signal|store$/i);
 }
 
 function isSentinel(value: unknown, expression: RegExp): boolean {

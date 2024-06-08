@@ -1,16 +1,18 @@
 import {isPlainObject} from '@oscarpalmer/atoms/is';
 import {isReactive} from '../helpers/is';
-import type {Computed, List, Signal} from '../models';
+import type {Computed, ReactiveArray, Signal} from '../models';
+import {array} from './array';
 import {computed} from './computed';
-import {list} from './list';
 import {signal} from './signal';
 
 const primitives = new Set(['boolean', 'number', 'string']);
 
 /**
- * Creates a reactive list
+ * Creates a reactive array
  */
-export function reactive<Model extends unknown[]>(value: Model): List<Model>;
+export function reactive<Model extends unknown[]>(
+	value: Model,
+): ReactiveArray<Model>;
 
 /**
  * Creates a computed, reactive value
@@ -29,7 +31,7 @@ export function reactive(value: unknown): unknown {
 
 	switch (true) {
 		case Array.isArray(value):
-			return list(value);
+			return array(value);
 
 		case typeof value === 'function':
 			return computed(value as never);

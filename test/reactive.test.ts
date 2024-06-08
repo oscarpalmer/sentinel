@@ -1,5 +1,5 @@
 import {expect, test} from 'bun:test';
-import {isComputed, isList, isReactive, isSignal, reactive} from '../src';
+import {isArray, isComputed, isReactive, isSignal, reactive} from '../src';
 
 test('reactive', () => {
 	const arr = reactive([]);
@@ -7,7 +7,7 @@ test('reactive', () => {
 	const sig = reactive(0);
 	const com = reactive(() => sig.get() ** 2);
 
-	expect(isList(arr)).toBe(true);
+	expect(isArray(arr)).toBe(true);
 	expect(isSignal(obj)).toBe(true);
 	expect(isSignal(sig)).toBe(true);
 	expect(isComputed(com)).toBe(true);

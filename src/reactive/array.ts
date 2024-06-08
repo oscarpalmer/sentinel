@@ -1,11 +1,11 @@
 import {getProxyValue, setProxyValue} from '../helpers/proxy';
 import {getValue} from '../helpers/value';
-import type {Computed, List} from '../models';
+import type {Computed, ReactiveArray} from '../models';
 import {computed} from './computed';
 import {signal} from './signal';
 import {reactiveValue} from './value';
 
-export function list<Value>(value: Value[]): List<Value> {
+export function array<Value>(value: Value[]): ReactiveArray<Value> {
 	const length = signal(value.length);
 	const original = reactiveValue([] as Value[]);
 
@@ -26,32 +26,15 @@ export function list<Value>(value: Value[]): List<Value> {
 
 	const instance = Object.create({
 		...original.callbacks,
-		at(index: number): Value | undefined {
-			return getValue(original.state).at(index);
-		},
 		filter(
 			callbackFn: (value: Value, index: number, array: Value[]) => boolean,
 		) {
 			return computed(() => getValue(original.state).filter(callbackFn));
 		},
-		find(callbackFn: (value: Value, index: number, array: Value[]) => boolean) {
-			return getValue(original.state).find(callbackFn);
-		},
-		findIndex(
-			callbackFn: (value: Value, index: number, array: Value[]) => boolean,
-		) {
-			return getValue(original.state).findIndex(callbackFn);
-		},
 		get(property: unknown) {
 			return property == null
 				? getValue(original.state)
-				: original.state.value[property as never];
-		},
-		includes(searchElement: Value, fromIndex?: number) {
-			return getValue(original.state).includes(searchElement, fromIndex);
-		},
-		indexOf(searchElement: Value, fromIndex?: number) {
-			return getValue(original.state).indexOf(searchElement, fromIndex);
+				: original.state.value.at(property as never);
 		},
 		insert(index: number, ...value: Value[]) {
 			original.state.value.splice(index, 0, ...value);
@@ -66,10 +49,7 @@ export function list<Value>(value: Value[]): List<Value> {
 		peek(property: unknown) {
 			return property == null
 				? original.state.value
-				: original.state.value[property as never];
-		},
-		pop() {
-			return original.state.value.pop();
+				: original.state.value.at(property as never);
 		},
 		push(...values: Value[]): number {
 			return original.state.value.push(...values);
@@ -83,20 +63,14 @@ export function list<Value>(value: Value[]): List<Value> {
 				...(isArray ? first : [second]),
 			);
 		},
-		shift() {
-			return original.state.value.shift();
-		},
 		splice(start: number, deleteCount?: number, ...values: Value[]): Value[] {
 			return original.state.value.splice(start, deleteCount ?? 0, ...values);
-		},
-		unshift(...values: Value[]): number {
-			return original.state.value.unshift(...values);
 		},
 	});
 
 	Object.defineProperties(instance, {
 		$sentinel: {
-			value: 'list',
+			value: 'array',
 		},
 		length: {
 			get() {

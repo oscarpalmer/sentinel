@@ -1,13 +1,13 @@
 import {expect, test} from 'bun:test';
 import {
+	array,
 	computed,
 	effect,
+	isArray,
 	isComputed,
 	isEffect,
-	isList,
 	isReactive,
 	isSignal,
-	list,
 	signal,
 } from '../src';
 
@@ -16,7 +16,7 @@ test('is', () => {
 
 	const sig = signal('isSignal');
 	const com = computed(() => `isComputed: ${sig}!!!`);
-	const arr = list([1, 2, 3]);
+	const arr = array([1, 2, 3]);
 
 	const fx = effect(() => {
 		value += com.get();
@@ -24,7 +24,7 @@ test('is', () => {
 
 	expect(isComputed(com)).toBe(true);
 	expect(isEffect(fx)).toBe(true);
-	expect(isList(arr)).toBe(true);
+	expect(isArray(arr)).toBe(true);
 	expect(isSignal(sig)).toBe(true);
 
 	expect(isReactive(com)).toBe(true);
