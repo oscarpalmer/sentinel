@@ -107,3 +107,65 @@ test('set', done => {
 		});
 	});
 });
+
+test('subscriptions', done => {
+	const arr = array([1, 2, 3]);
+
+	let anySubscribed = 0;
+	let negativeSubscribed = 0;
+	let positiveSubscribed = 0;
+
+	const negativeSubscriber = (value: number) => {
+		anySubscribed += 1;
+		negativeSubscribed += 1;
+	};
+
+	const positiveSubscriberOne = (value: number) => {
+		anySubscribed += 1;
+		positiveSubscribed += 1;
+	};
+
+	const positiveSubscriberTwo = (value: number) => {
+		anySubscribed += 1;
+		positiveSubscribed += 1;
+	};
+
+	const negativeUnsubscriber = arr.subscribe(-1, negativeSubscriber);
+	arr.subscribe(1, positiveSubscriberOne);
+	arr.subscribe(1, positiveSubscriberTwo);
+
+	expect(anySubscribed).toBe(3);
+	expect(negativeSubscribed).toBe(1);
+	expect(positiveSubscribed).toBe(2);
+
+	arr.push(4);
+	arr.set(1, 99);
+
+	wait(() => {
+		expect(anySubscribed).toBe(6);
+		expect(negativeSubscribed).toBe(2);
+		expect(positiveSubscribed).toBe(4);
+
+		negativeUnsubscriber();
+		arr.unsubscribe(1);
+
+		arr.push(5);
+		arr.set(1, 100);
+
+		wait(() => {
+			expect(anySubscribed).toBe(6);
+			expect(negativeSubscribed).toBe(2);
+			expect(positiveSubscribed).toBe(4);
+
+			done();
+		});
+	});
+});
+
+test('toArray', () => {
+	const arr = array([1, 2, 3]);
+	const copy = arr.toArray();
+
+	expect(arr.peek()).toEqual(copy);
+	expect(Array.isArray(copy)).toBe(true);
+});

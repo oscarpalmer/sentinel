@@ -31,8 +31,12 @@ export function effect(callback: () => void): Effect {
 				for (const reactive of state.reactives) {
 					reactive.callbacks.any.delete(state);
 
-					for (const [, keyed] of reactive.callbacks.values) {
+					for (const [key, keyed] of reactive.callbacks.values) {
 						keyed.delete(state);
+
+						if (keyed.size === 0) {
+							reactive.callbacks.keys.delete(key);
+						}
 					}
 				}
 

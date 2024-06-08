@@ -51,8 +51,11 @@ function effect(callback) {
         state.active = false;
         for (const reactive of state.reactives) {
           reactive.callbacks.any.delete(state);
-          for (const [, keyed] of reactive.callbacks.values) {
+          for (const [key, keyed] of reactive.callbacks.values) {
             keyed.delete(state);
+            if (keyed.size === 0) {
+              reactive.callbacks.keys.delete(key);
+            }
           }
         }
         state.reactives.clear();
@@ -205,6 +208,49 @@ function setProxyValue(reactive, target, property, value2, length) {
   return result;
 }
 
+// src/helpers/subscription.ts
+function subscribe(state, subscriber, index) {
+  let set;
+  if (typeof index === "number") {
+    if (state.callbacks.keys.has(index)) {
+      set = state.callbacks.values.get(index);
+    } else {
+      set = new Set;
+      state.callbacks.keys.add(index);
+      state.callbacks.values.set(index, set);
+    }
+  } else {
+    set = state.callbacks.any;
+  }
+  if (set == null || set.has(subscriber)) {
+    return () => {
+    };
+  }
+  set.add(subscriber);
+  subscriber(state.value);
+  return () => {
+    unsubscribe(state, subscriber, index);
+  };
+}
+function unsubscribe(state, subscriber, index) {
+  if (typeof index === "number") {
+    const set = state.callbacks.values.get(index);
+    if (set != null) {
+      if (subscriber == null) {
+        set.clear();
+      } else {
+        set.delete(subscriber);
+      }
+      if (set.size === 0) {
+        state.callbacks.keys.delete(index);
+        state.callbacks.values.delete(index);
+      }
+    }
+  } else if (subscriber != null) {
+    state.callbacks.any.delete(subscriber);
+  }
+}
+
 // src/reactive/value.ts
 function reactiveValue(value3) {
   const state = {
@@ -236,19 +282,14 @@ function reactiveValue(value3) {
       disable(state);
     },
     subscribe(subscriber) {
-      const { callbacks: callbacks2, value: value4 } = state;
-      if (callbacks2.any.has(subscriber)) {
-        return () => {
-        };
-      }
-      callbacks2.any.add(subscriber);
-      subscriber(value4);
-      return () => {
-        state.callbacks.any.delete(subscriber);
-      };
+      return subscribe(state, subscriber);
     },
     unsubscribe(subscriber) {
-      state.callbacks.any.delete(subscriber);
+      if (subscriber == null) {
+        state.callbacks.any.clear();
+      } else {
+        state.callbacks.any.delete(subscriber);
+      }
     }
   };
   return {
@@ -324,7 +365,7 @@ function array(value9) {
       return computed(() => getValue(original.state).map(callbackfn));
     },
     peek(property) {
-      return property == null ? original.state.value : original.state.value.at(property);
+      return property == null ? original.state.value.slice(0) : original.state.value.at(property);
     },
     push(...values) {
       return original.state.value.push(...values);
@@ -337,6 +378,17 @@ function array(value9) {
     },
     splice(start, deleteCount, ...values) {
       return original.state.value.splice(start, deleteCount ?? 0, ...values);
+    },
+    subscribe(first, second) {
+      const firstIsNumber = typeof first === "number";
+      return subscribe(original.state, firstIsNumber ? second : first, firstIsNumber ? first : undefined);
+    },
+    toArray() {
+      return original.state.value.slice();
+    },
+    unsubscribe(first, second) {
+      const firstIsNumber = typeof first === "number";
+      unsubscribe(original.state, firstIsNumber ? second : first, firstIsNumber ? first : undefined);
     }
   });
   Object.defineProperties(instance, {

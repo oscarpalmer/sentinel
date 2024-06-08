@@ -6,7 +6,7 @@ import type {Key} from '@oscarpalmer/atoms/models';
 export type Computed<Value> = ReactiveValue<Value>;
 
 /**
- * A reactive effect for changes in values
+ * A reactive effect for changes in a value
  */
 export type Effect = {
 	/**
@@ -29,21 +29,21 @@ export type Reactive = ReactiveValue<unknown>;
 
 export type ReactiveArray<Value> = {
 	/**
-	 * Get the length of the list
+	 * Get the length of the array
 	 */
 	get length(): number;
 	/**
-	 * Set the length of the list
+	 * Set the length of the array
 	 */
 	set length(value: number);
 	/**
-	 * Calls a callback function on each value in the list, and returns a computed, reactive value that contains the results
+	 * Calls a callback function on each value in the array, and returns a computed, reactive value that contains the results
 	 */
 	filter(
 		callbackFn: (value: Value, index: number, array: Value[]) => boolean,
 	): Computed<Value[]>;
 	/**
-	 * Gets the value
+	 * Gets the array
 	 */
 	get(): Value[];
 	/**
@@ -51,11 +51,11 @@ export type ReactiveArray<Value> = {
 	 */
 	get<Index extends keyof Value[]>(index: Index): Value[][Index];
 	/**
-	 * Inserts values at a specific index, and returns the new length of the list
+	 * Inserts values at a specific index, and returns the new length of the array
 	 */
 	insert(index: number, ...value: Value[]): number;
 	/**
-	 * Calls a callback function on each value in the list, and returns a computed, reactive value that contains the results
+	 * Calls a callback function on each value in the array, and returns a computed, reactive value that contains the results
 	 */
 	map<Next>(
 		callbackfn: (value: Value, index: number, array: Value[]) => Next,
@@ -69,7 +69,7 @@ export type ReactiveArray<Value> = {
 	 */
 	peek<Index extends keyof Value[]>(index: Index): Value[][Index];
 	/**
-	 * Appends new values to the end of the list, and returns the new length of the list
+	 * Appends new values to the end of the array, and returns the new length of the array
 	 */
 	push(...values: Value[]): number;
 	/**
@@ -81,9 +81,31 @@ export type ReactiveArray<Value> = {
 	 */
 	set<Index extends keyof Value[]>(index: Index, value: Value[][Index]): void;
 	/**
-	 * Removes values from the list and, if necessary, inserts new values in their place, returning the deleted values
+	 * Removes values from the array and, if necessary, inserts new values in their place, returning the deleted values
 	 */
 	splice(start: number, deleteCount?: number, ...values: Value[]): Value[];
+	/**
+	 * - Subscribes to changes for a specific index in the array
+	 * - Returns a function to allow for unsubscribing
+	 */
+	subscribe(index: number, subscriber: Subscriber<Value>): Unsubscriber;
+	/**
+	 * - Subscribes to changes for the array
+	 * - Returns a function to allow for unsubscribing
+	 */
+	subscribe(subscriber: Subscriber<Value[]>): Unsubscriber;
+	/**
+	 * Gets a shallow copy of the array
+	 */
+	toArray(): Value[];
+	/**
+	 * Unsubscribes from changes for a specific index in the array _(and optionally a specific subscriber)_
+	 */
+	unsubscribe(index: number, subscriber?: Subscriber<Value>): void;
+	/**
+	 * Unsubscribes from changes for the array _(and optionally a specific subscriber)_
+	 */
+	unsubscribe(subscriber?: Subscriber<Value[]>): void;
 } & ReactiveValue<Value[]>;
 
 type ReactiveCallbacks<Value> = {
@@ -129,9 +151,9 @@ export type ReactiveValue<Value> = {
 	 */
 	toString(): string;
 	/**
-	 * Unsubscribes from changes for the value
+	 * Unsubscribes from changes for the value _(and optionally a specific subscriber)_
 	 */
-	unsubscribe(subscriber: Subscriber<Value>): void;
+	unsubscribe(subscriber?: Subscriber<Value>): void;
 };
 
 export type Signal<Value> = {

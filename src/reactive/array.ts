@@ -1,6 +1,7 @@
 import {getProxyValue, setProxyValue} from '../helpers/proxy';
+import {subscribe, unsubscribe} from '../helpers/subscription';
 import {getValue} from '../helpers/value';
-import type {Computed, ReactiveArray} from '../models';
+import type {Computed, ReactiveArray, Subscriber} from '../models';
 import {computed} from './computed';
 import {signal} from './signal';
 import {reactiveValue} from './value';
@@ -48,7 +49,7 @@ export function array<Value>(value: Value[]): ReactiveArray<Value> {
 		},
 		peek(property: unknown) {
 			return property == null
-				? original.state.value
+				? original.state.value.slice(0)
 				: original.state.value.at(property as never);
 		},
 		push(...values: Value[]): number {
@@ -67,6 +68,27 @@ export function array<Value>(value: Value[]): ReactiveArray<Value> {
 		},
 		splice(start: number, deleteCount?: number, ...values: Value[]): Value[] {
 			return original.state.value.splice(start, deleteCount ?? 0, ...values);
+		},
+		subscribe(first: number | Subscriber<Value>, second?: Subscriber<Value>) {
+			const firstIsNumber = typeof first === 'number';
+
+			return subscribe(
+				original.state as never,
+				firstIsNumber ? (second as never) : first,
+				firstIsNumber ? first : undefined,
+			);
+		},
+		toArray() {
+			return original.state.value.slice();
+		},
+		unsubscribe(first: number | Subscriber<Value>, second?: Subscriber<Value>) {
+			const firstIsNumber = typeof first === 'number';
+
+			unsubscribe(
+				original.state as never,
+				firstIsNumber ? second : first,
+				firstIsNumber ? first : undefined,
+			);
 		},
 	});
 

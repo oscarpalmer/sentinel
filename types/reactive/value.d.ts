@@ -8,7 +8,7 @@ export declare function reactiveValue<Value>(value: Value): {
         run(): void;
         stop(): void;
         subscribe(subscriber: Subscriber<Value>): Unsubscriber;
-        unsubscribe(subscriber: Subscriber<Value>): void;
+        unsubscribe(subscriber?: Subscriber<Value>): void;
     };
     state: ReactiveState<Value>;
 };

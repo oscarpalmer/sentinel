@@ -45,14 +45,14 @@ test('keyed', done => {
 	let negativeEffects = 0;
 	let positiveEffects = 0;
 
-	effect(() => {
+	const negativeEffect = effect(() => {
 		arr.get(-1);
 
 		anyEffects += 1;
 		negativeEffects += 1;
 	});
 
-	effect(() => {
+	const positiveEffect = effect(() => {
 		arr.get(1);
 
 		anyEffects += 1;
@@ -71,7 +71,8 @@ test('keyed', done => {
 		expect(negativeEffects).toBe(2);
 		expect(positiveEffects).toBe(2);
 
-		arr.stop();
+		negativeEffect.stop();
+		positiveEffect.stop();
 
 		wait(() => {
 			arr.push(5);
@@ -82,7 +83,37 @@ test('keyed', done => {
 				expect(negativeEffects).toBe(2);
 				expect(positiveEffects).toBe(2);
 
-				done();
+				negativeEffect.start();
+				positiveEffect.start();
+
+				wait(() => {
+					expect(anyEffects).toBe(6);
+					expect(negativeEffects).toBe(3);
+					expect(positiveEffects).toBe(3);
+
+					arr.stop();
+
+					wait(() => {
+						arr.push(6);
+						arr.set(1, 101);
+
+						wait(() => {
+							expect(anyEffects).toBe(6);
+							expect(negativeEffects).toBe(3);
+							expect(positiveEffects).toBe(3);
+
+							arr.run();
+
+							wait(() => {
+								expect(anyEffects).toBe(8);
+								expect(negativeEffects).toBe(4);
+								expect(positiveEffects).toBe(4);
+
+								done();
+							});
+						});
+					});
+				});
 			});
 		});
 	});

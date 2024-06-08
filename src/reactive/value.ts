@@ -1,4 +1,5 @@
 import {disable, enable} from '../helpers/event';
+import {subscribe} from '../helpers/subscription';
 import {getValue} from '../helpers/value';
 import type {ReactiveState, Subscriber, Unsubscriber} from '../models';
 
@@ -39,23 +40,15 @@ export function reactiveValue<Value>(value: Value) {
 		},
 
 		subscribe(subscriber: Subscriber<Value>): Unsubscriber {
-			const {callbacks, value} = state;
-
-			if (callbacks.any.has(subscriber)) {
-				return () => {};
-			}
-
-			callbacks.any.add(subscriber);
-
-			subscriber(value);
-
-			return () => {
-				state.callbacks.any.delete(subscriber);
-			};
+			return subscribe(state, subscriber);
 		},
 
-		unsubscribe(subscriber: Subscriber<Value>): void {
-			state.callbacks.any.delete(subscriber);
+		unsubscribe(subscriber?: Subscriber<Value>): void {
+			if (subscriber == null) {
+				state.callbacks.any.clear();
+			} else {
+				state.callbacks.any.delete(subscriber);
+			}
 		},
 	};
 
