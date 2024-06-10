@@ -4,7 +4,8 @@
 		"url": "https://oscarpalmer.se"
 	},
 	"dependencies": {
-		"@oscarpalmer/atoms": "0.49.0"
+		"@oscarpalmer/atoms": "0.49.0",
+		"type-fest": "^4.20.0"
 	},
 	"description": "",
 	"devDependencies": {
@@ -22,11 +23,7 @@
 			"types": "./types/index.d.ts"
 		}
 	},
-	"files": [
-		"dist",
-		"src",
-		"types"
-	],
+	"files": ["dist", "src", "types"],
 	"license": "MIT",
 	"main": "./dist/index.js",
 	"module": "./dist/index.mjs",
@@ -37,12 +34,12 @@
 	},
 	"scripts": {
 		"build": "bun run clean && bunx bun ./.bun.ts && bunx bun ./.bun.ts --mjs && bun run types",
-		"clean": "rm -rf ./dist && rm -rf ./types && rm ./tsconfig.tsbuildinfo",
+		"clean": "rm -rf ./dist && rm -rf ./types && rm -f ./tsconfig.tsbuildinfo",
 		"test": "bun test --preload ./test/_preload.ts --coverage",
 		"types": "bunx tsc -p ./tsconfig.json",
 		"watch": "bun build ./src/index.ts --outfile ./dist/index.js --watch"
 	},
 	"type": "module",
 	"types": "./types/index.d.ts",
-	"version": "0.20.0"
+	"version": "0.21.0"
 }

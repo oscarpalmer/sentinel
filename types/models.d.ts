@@ -1,4 +1,5 @@
-import type { Key } from '@oscarpalmer/atoms/models';
+import type { Get, Key, Paths } from '@oscarpalmer/atoms/models';
+import type { ToString } from 'type-fest/source/internal';
 /**
  * A computed, reactive value
  */
@@ -79,7 +80,7 @@ export type ReactiveArray<Value> = {
      * - Subscribes to changes for a specific index in the array
      * - Returns a function to allow for unsubscribing
      */
-    subscribe(index: number, subscriber: Subscriber<Value>): Unsubscriber;
+    subscribe<Index extends keyof Value[]>(index: Index, subscriber: Subscriber<Value[][Index]>): Unsubscriber;
     /**
      * - Subscribes to changes for the array
      * - Returns a function to allow for unsubscribing
@@ -92,11 +93,11 @@ export type ReactiveArray<Value> = {
     /**
      * Unsubscribes from changes for a specific index in the array _(and optionally a specific subscriber)_
      */
-    unsubscribe(index: number, subscriber?: Subscriber<Value>): void;
+    unsubscribe<Index extends keyof Value[]>(index: Index, subscriber?: Subscriber<Value[][Index]>): void;
     /**
      * Unsubscribes from changes for the array _(and optionally a specific subscriber)_
      */
-    unsubscribe(subscriber?: Subscriber<Value[]>): void;
+    unsubscribe(subscriber?: Subscriber<unknown>): void;
 } & ReactiveValue<Value[]>;
 type ReactiveCallbacks<Value> = {
     any: Set<EffectState | Subscriber<Value>>;
@@ -108,6 +109,46 @@ export type ReactiveState<Value> = {
     callbacks: ReactiveCallbacks<Value>;
     value: Value;
 };
+export type ReactiveStore<Value> = {
+    /**
+     * Gets the store
+     */
+    get(): Value;
+    /**
+     * Gets the value for a path
+     */
+    get<Path extends Paths<Value>>(path: Path): Get<Value, ToString<Path>>;
+    /**
+     * Gets the store without triggering reactivity
+     */
+    peek(): Value;
+    /**
+     * Gets the value for a path without triggering reactivity
+     */
+    peek<Path extends Paths<Value>>(path: Path): Get<Value, ToString<Path>>;
+    /**
+     * Sets the value for a key
+     */
+    set<Key extends keyof Value>(key: Key, value: Value[Key] | unknown): void;
+    /**
+     * - Subscribes to changes for a specific key in the store
+     * - Returns a function to allow for unsubscribing
+     */
+    subscribe<Key extends keyof Value>(key: Key, subscriber: Subscriber<Value[Key]>): Unsubscriber;
+    /**
+     * - Subscribes to changes for the store
+     * - Returns a function to allow for unsubscribing
+     */
+    subscribe(subscriber: Subscriber<unknown>): Unsubscriber;
+    /**
+     * Unsubscribes from changes for a specific key in the store _(and optionally a specific subscriber)_
+     */
+    unsubscribe<Key extends keyof Value>(key: Key, subscriber?: Subscriber<Value[Key]>): void;
+    /**
+     * Unsubscribes from changes for the store _(and optionally a specific subscriber)_
+     */
+    unsubscribe(subscriber?: Subscriber<unknown>): void;
+} & ReactiveValue<Value>;
 export type ReactiveValue<Value> = {
     /**
      * Gets the value

@@ -1,3 +1,4 @@
+import type {Key} from '@oscarpalmer/atoms/models';
 import type {
 	EffectState,
 	ReactiveState,
@@ -8,18 +9,18 @@ import type {
 export function subscribe<Value>(
 	state: ReactiveState<Value>,
 	subscriber: Subscriber<Value>,
-	index?: number,
+	key?: Key,
 ): Unsubscriber {
 	let set: Set<EffectState | Subscriber<Value>> | undefined;
 
-	if (typeof index === 'number') {
-		if (state.callbacks.keys.has(index)) {
-			set = state.callbacks.values.get(index);
+	if (key != null) {
+		if (state.callbacks.keys.has(key)) {
+			set = state.callbacks.values.get(key);
 		} else {
 			set = new Set();
 
-			state.callbacks.keys.add(index);
-			state.callbacks.values.set(index, set);
+			state.callbacks.keys.add(key);
+			state.callbacks.values.set(key, set);
 		}
 	} else {
 		set = state.callbacks.any;
@@ -34,17 +35,17 @@ export function subscribe<Value>(
 	subscriber(state.value);
 
 	return () => {
-		unsubscribe(state, subscriber, index);
+		unsubscribe(state, subscriber, key);
 	};
 }
 
 export function unsubscribe<Value>(
 	state: ReactiveState<Value>,
 	subscriber?: Subscriber<Value> | undefined,
-	index?: number,
+	key?: Key,
 ): void {
-	if (typeof index === 'number') {
-		const set = state.callbacks.values.get(index);
+	if (key != null) {
+		const set = state.callbacks.values.get(key);
 
 		if (set != null) {
 			if (subscriber == null) {
@@ -54,8 +55,8 @@ export function unsubscribe<Value>(
 			}
 
 			if (set.size === 0) {
-				state.callbacks.keys.delete(index);
-				state.callbacks.values.delete(index);
+				state.callbacks.keys.delete(key);
+				state.callbacks.values.delete(key);
 			}
 		}
 	} else if (subscriber != null) {

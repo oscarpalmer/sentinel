@@ -4,12 +4,12 @@ import {isReactive} from './is';
 import {arrayOperations, updateArray} from './value';
 
 export function getProxyValue(
-	reactive: ReactiveState<unknown[]>,
-	target: unknown[],
+	reactive: ReactiveState<object>,
+	target: object,
 	property: PropertyKey,
-	length: Signal<number>,
+	length?: Signal<number>,
 ): unknown {
-	if (arrayOperations.has(property as never)) {
+	if (length != null && arrayOperations.has(property as never)) {
 		return updateArray(
 			reactive as ReactiveState<unknown[]>,
 			target as unknown[],
@@ -24,8 +24,8 @@ export function getProxyValue(
 }
 
 export function setProxyValue(
-	reactive: ReactiveState<unknown[]>,
-	target: unknown[],
+	reactive: ReactiveState<object>,
+	target: object,
 	property: PropertyKey,
 	value: unknown,
 	length?: Signal<number>,
@@ -39,8 +39,12 @@ export function setProxyValue(
 	if (result) {
 		emit(
 			reactive,
-			typeof property === 'string' && /^\d+$/.test(property)
-				? [Number.parseInt(property, 10)]
+			typeof property === 'string'
+				? length == null
+					? [property]
+					: /^\d+$/.test(property)
+						? [Number.parseInt(property, 10)]
+						: undefined
 				: undefined,
 		);
 

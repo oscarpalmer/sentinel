@@ -1,8 +1,10 @@
+import type {PlainObject} from '@oscarpalmer/atoms';
 import type {
 	Computed,
 	Effect,
 	Reactive,
 	ReactiveArray,
+	ReactiveStore,
 	Signal,
 } from '../models';
 
@@ -38,6 +40,13 @@ function isSentinel(value: unknown, expression: RegExp): boolean {
 	return expression.test(
 		(value as unknown as {$sentinel: string})?.$sentinel ?? '',
 	);
+}
+
+/**
+ * Is the value a reactive store?
+ */
+export function isStore(value: unknown): value is ReactiveStore<PlainObject> {
+	return isSentinel(value, /^store$/i);
 }
 
 /**

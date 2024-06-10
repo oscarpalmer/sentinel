@@ -99,6 +99,9 @@ function isReactive(value) {
 var isSentinel = function(value, expression) {
   return expression.test(value?.$sentinel ?? "");
 };
+function isStore(value) {
+  return isSentinel(value, /^store$/i);
+}
 function isSignal(value) {
   return isSentinel(value, /^signal$/i);
 }
@@ -188,36 +191,16 @@ var arrayOperations = new Set([
   "unshift"
 ]);
 
-// src/helpers/proxy.ts
-function getProxyValue(reactive, target, property, length) {
-  if (arrayOperations.has(property)) {
-    return updateArray(reactive, target, property, length);
-  }
-  const value2 = Reflect.get(target, property);
-  return isReactive(value2) ? value2.get() : value2;
-}
-function setProxyValue(reactive, target, property, value2, length) {
-  if (Object.is(Reflect.get(target, property), value2)) {
-    return true;
-  }
-  const result = Reflect.set(target, property, value2);
-  if (result) {
-    emit(reactive, typeof property === "string" && /^\d+$/.test(property) ? [Number.parseInt(property, 10)] : undefined);
-    length?.set(target.length);
-  }
-  return result;
-}
-
 // src/helpers/subscription.ts
-function subscribe(state, subscriber, index) {
+function subscribe(state, subscriber, key) {
   let set;
-  if (typeof index === "number") {
-    if (state.callbacks.keys.has(index)) {
-      set = state.callbacks.values.get(index);
+  if (key != null) {
+    if (state.callbacks.keys.has(key)) {
+      set = state.callbacks.values.get(key);
     } else {
       set = new Set;
-      state.callbacks.keys.add(index);
-      state.callbacks.values.set(index, set);
+      state.callbacks.keys.add(key);
+      state.callbacks.values.set(key, set);
     }
   } else {
     set = state.callbacks.any;
@@ -229,12 +212,12 @@ function subscribe(state, subscriber, index) {
   set.add(subscriber);
   subscriber(state.value);
   return () => {
-    unsubscribe(state, subscriber, index);
+    unsubscribe(state, subscriber, key);
   };
 }
-function unsubscribe(state, subscriber, index) {
-  if (typeof index === "number") {
-    const set = state.callbacks.values.get(index);
+function unsubscribe(state, subscriber, key) {
+  if (key != null) {
+    const set = state.callbacks.values.get(key);
     if (set != null) {
       if (subscriber == null) {
         set.clear();
@@ -242,8 +225,8 @@ function unsubscribe(state, subscriber, index) {
         set.delete(subscriber);
       }
       if (set.size === 0) {
-        state.callbacks.keys.delete(index);
-        state.callbacks.values.delete(index);
+        state.callbacks.keys.delete(key);
+        state.callbacks.values.delete(key);
       }
     }
   } else if (subscriber != null) {
@@ -252,9 +235,9 @@ function unsubscribe(state, subscriber, index) {
 }
 
 // src/reactive/value.ts
-function reactiveValue(value3) {
+function reactiveValue(value2) {
   const state = {
-    value: value3,
+    value: value2,
     active: true,
     callbacks: {
       any: new Set,
@@ -299,9 +282,9 @@ function reactiveValue(value3) {
 }
 
 // src/reactive/computed.ts
-function computed(value5) {
+function computed(value4) {
   const original = reactiveValue(undefined);
-  const fx = effect(() => setValue(original.state, value5()));
+  const fx = effect(() => setValue(original.state, value4()));
   const instance = Object.create({
     ...original.callbacks,
     run() {
@@ -315,6 +298,26 @@ function computed(value5) {
     value: "computed"
   });
   return instance;
+}
+
+// src/helpers/proxy.ts
+function getProxyValue(reactive, target, property, length) {
+  if (length != null && arrayOperations.has(property)) {
+    return updateArray(reactive, target, property, length);
+  }
+  const value5 = Reflect.get(target, property);
+  return isReactive(value5) ? value5.get() : value5;
+}
+function setProxyValue(reactive, target, property, value5, length) {
+  if (Object.is(Reflect.get(target, property), value5)) {
+    return true;
+  }
+  const result = Reflect.set(target, property, value5);
+  if (result) {
+    emit(reactive, typeof property === "string" ? length == null ? [property] : /^\d+$/.test(property) ? [Number.parseInt(property, 10)] : undefined : undefined);
+    length?.set(target.length);
+  }
+  return result;
 }
 
 // src/reactive/signal.ts
@@ -337,58 +340,84 @@ function signal(value7) {
   return instance;
 }
 
-// src/reactive/array.ts
-function array(value9) {
-  const length = signal(value9.length);
-  const original = reactiveValue([]);
+// src/reactive/object.ts
+var setArrayValue = function(state, first, second) {
+  if (Array.isArray(first)) {
+    return state.value.splice(0, state.value.length, ...first);
+  }
+  state.value[first] = second;
+};
+var setStoreValue = function(state, first, second) {
+  if (typeof first !== "object" && first !== null) {
+    state.value[first] = second;
+  }
+};
+function reactiveObject(value9) {
+  const isArray2 = Array.isArray(value9);
+  const length = isArray2 ? signal(0) : undefined;
+  const original = reactiveValue(isArray2 ? [] : {});
   original.state.value = new Proxy(value9, {
-    get(target, property) {
-      return getProxyValue(original.state, target, property, length);
-    },
-    set(target, property, value10) {
-      return setProxyValue(original.state, target, property, value10, length);
+    get: (target, key) => getProxyValue(original.state, target, key, length),
+    set: (target, key, value10) => {
+      return setProxyValue(original.state, target, key, value10, length);
     }
   });
+  const callbacks = {
+    ...original.callbacks,
+    get(property) {
+      return getValue(original.state, property);
+    },
+    peek(property) {
+      if (property == null) {
+        return isArray2 ? [...original.state.value] : { ...original.state.value };
+      }
+      return isArray2 ? original.state.value.at(property) : original.state.value[property];
+    },
+    set(first, second) {
+      if (isArray2) {
+        return setArrayValue(original.state, first, second);
+      }
+      setStoreValue(original.state, first, second);
+    },
+    subscribe(first, second) {
+      const firstIsSubscriber = typeof first === "function";
+      return subscribe(original.state, firstIsSubscriber ? first : second, firstIsSubscriber ? undefined : first);
+    },
+    unsubscribe(first, second) {
+      const firstIsSubscriber = typeof first === "function";
+      return unsubscribe(original.state, firstIsSubscriber ? first : second, firstIsSubscriber ? undefined : first);
+    }
+  };
+  return {
+    callbacks,
+    length,
+    state: original.state
+  };
+}
+
+// src/reactive/array.ts
+function array(value10) {
+  const original = reactiveObject(value10);
   const instance = Object.create({
     ...original.callbacks,
     filter(callbackFn) {
       return computed(() => getValue(original.state).filter(callbackFn));
     },
-    get(property) {
-      return property == null ? getValue(original.state) : getValue(original.state, property);
-    },
-    insert(index, ...value10) {
-      original.state.value.splice(index, 0, ...value10);
-      return length.peek();
+    insert(index, ...value11) {
+      original.state.value.splice(index, 0, ...value11);
+      return original.length?.peek();
     },
     map(callbackfn) {
       return computed(() => getValue(original.state).map(callbackfn));
     },
-    peek(property) {
-      return property == null ? original.state.value.slice(0) : original.state.value.at(property);
-    },
     push(...values) {
       return original.state.value.push(...values);
-    },
-    set(first, second) {
-      if (Array.isArray(first)) {
-        return original.state.value.splice(0, original.state.value.length, ...first);
-      }
-      original.state.value[first] = second;
     },
     splice(start, deleteCount, ...values) {
       return original.state.value.splice(start, deleteCount ?? 0, ...values);
     },
-    subscribe(first, second) {
-      const firstIsNumber = typeof first === "number";
-      return subscribe(original.state, firstIsNumber ? second : first, firstIsNumber ? first : undefined);
-    },
     toArray() {
       return original.state.value.slice();
-    },
-    unsubscribe(first, second) {
-      const firstIsNumber = typeof first === "number";
-      unsubscribe(original.state, firstIsNumber ? second : first, firstIsNumber ? first : undefined);
     }
   });
   Object.defineProperties(instance, {
@@ -397,46 +426,61 @@ function array(value9) {
     },
     length: {
       get() {
-        return length.get();
+        return original.length?.get();
       },
-      set(value10) {
-        original.state.value.length = value10 < 0 ? 0 : value10;
+      set(value11) {
+        original.state.value.length = value11 < 0 ? 0 : value11;
       }
     }
   });
   return instance;
 }
 // node_modules/@oscarpalmer/atoms/dist/js/is.mjs
-var isPlainObject = function(value9) {
-  if (typeof value9 !== "object" || value9 === null) {
+var isPlainObject = function(value10) {
+  if (typeof value10 !== "object" || value10 === null) {
     return false;
   }
-  const prototype = Object.getPrototypeOf(value9);
-  return (prototype === null || prototype === Object.prototype || Object.getPrototypeOf(prototype) === null) && !(Symbol.toStringTag in value9) && !(Symbol.iterator in value9);
+  const prototype = Object.getPrototypeOf(value10);
+  return (prototype === null || prototype === Object.prototype || Object.getPrototypeOf(prototype) === null) && !(Symbol.toStringTag in value10) && !(Symbol.iterator in value10);
 };
 
 // src/reactive/index.ts
-function reactive(value9) {
-  if (isReactive(value9)) {
-    return value9;
+function reactive(value10) {
+  if (isReactive(value10)) {
+    return value10;
   }
   switch (true) {
-    case Array.isArray(value9):
-      return array(value9);
-    case typeof value9 === "function":
-      return computed(value9);
-    case value9 == null:
-    case isPlainObject(value9):
-    case primitives.has(typeof value9):
-      return signal(value9);
+    case Array.isArray(value10):
+      return array(value10);
+    case typeof value10 === "function":
+      return computed(value10);
+    case value10 == null:
+    case isPlainObject(value10):
+    case primitives.has(typeof value10):
+      return signal(value10);
     default:
-      return value9;
+      return value10;
   }
 }
 var primitives = new Set(["boolean", "number", "string"]);
+// src/reactive/store.ts
+function store(value10) {
+  const original = reactiveObject(value10);
+  const instance = Object.create({
+    ...original.callbacks
+  });
+  Object.defineProperty(instance, "$sentinel", {
+    get() {
+      return "store";
+    }
+  });
+  return instance;
+}
 export {
+  store,
   signal,
   reactive,
+  isStore,
   isSignal,
   isReactive,
   isEffect,
