@@ -354,7 +354,7 @@ var setStoreValue = function(state, first, second) {
 };
 function reactiveObject(value9) {
   const isArray2 = Array.isArray(value9);
-  const length = isArray2 ? signal(0) : undefined;
+  const length = isArray2 ? signal(value9.length) : undefined;
   const original = reactiveValue(isArray2 ? [] : {});
   original.state.value = new Proxy(value9, {
     get: (target, key) => getProxyValue(original.state, target, key, length),

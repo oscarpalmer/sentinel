@@ -52,9 +52,12 @@ test('insert', done => {
 test('length', done => {
 	const arr = array([1, 2, 3]);
 
+	expect(arr.length).toBe(3);
+
 	arr.length = 0;
 
 	wait(() => {
+		expect(arr.length).toBe(0);
 		expect(JSON.stringify(arr.get())).toBe('[]');
 
 		done();

@@ -38,7 +38,7 @@ export function reactiveObject<Value extends ArrayOrPlainObject>(
 	value: Value,
 ): ReactiveObject<Value> {
 	const isArray = Array.isArray(value);
-	const length = isArray ? signal(0) : undefined;
+	const length = isArray ? signal(value.length) : undefined;
 	const original = reactiveValue(isArray ? [] : {});
 
 	original.state.value = new Proxy(value, {
