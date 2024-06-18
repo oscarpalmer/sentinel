@@ -109,36 +109,25 @@ function isSignal(value) {
 function disable(state) {
   if (state.active) {
     state.active = false;
-    for (const callback of state.callbacks.any) {
-      if (typeof callback !== "function") {
-        callback.reactives.delete(state);
-      }
-    }
-    for (const [, callback] of state.callbacks.values) {
-      for (const value of callback) {
-        if (typeof value !== "function") {
-          value.reactives.delete(state);
-        }
+    const effects = [...state.callbacks.any, ...state.callbacks.values.values()].flatMap((value) => value instanceof Set ? [...value.values()] : value).filter((value) => typeof value !== "function");
+    for (const fx of effects) {
+      if (typeof fx !== "function") {
+        fx.reactives.delete(state);
       }
     }
   }
 }
 function emit(state, keys) {
   if (state.active) {
-    const keyed = [];
-    for (const [key, value] of state.callbacks.values) {
-      if (keys == null || keys.includes(key)) {
-        keyed.push(...value);
-      }
-    }
-    const callbacks = [...state.callbacks.any, ...keyed].map((value) => typeof value === "function" ? value : value.callback);
-    for (const callback of callbacks) {
-      if (typeof callback === "function") {
+    const subscribers = [
+      ...state.callbacks.any,
+      ...[...state.callbacks.values.entries()].filter(([key]) => keys == null || keys.includes(key)).map(([, value]) => value)
+    ].flatMap((value) => value instanceof Set ? [...value.values()] : value).map((value) => typeof value === "function" ? value : value.callback);
+    for (const subsriber of subscribers) {
+      if (typeof subsriber === "function") {
         queue(() => {
-          callback(state.value);
+          subsriber(state.value);
         });
-      } else {
-        queue(callback);
       }
     }
   }
@@ -352,6 +341,10 @@ var setStoreValue = function(state, first, second) {
     state.value[first] = second;
   }
 };
+var subscribeOrUnsubscribe = function(state, callback, first, second) {
+  const firstIsSubscriber = typeof first === "function";
+  return callback(state, firstIsSubscriber ? first : second, firstIsSubscriber ? undefined : first);
+};
 function reactiveObject(value9) {
   const isArray2 = Array.isArray(value9);
   const length = isArray2 ? signal(value9.length) : undefined;
@@ -380,12 +373,10 @@ function reactiveObject(value9) {
       setStoreValue(original.state, first, second);
     },
     subscribe(first, second) {
-      const firstIsSubscriber = typeof first === "function";
-      return subscribe(original.state, firstIsSubscriber ? first : second, firstIsSubscriber ? undefined : first);
+      return subscribeOrUnsubscribe(original.state, subscribe, first, second);
     },
     unsubscribe(first, second) {
-      const firstIsSubscriber = typeof first === "function";
-      return unsubscribe(original.state, firstIsSubscriber ? first : second, firstIsSubscriber ? undefined : first);
+      subscribeOrUnsubscribe(original.state, unsubscribe, first, second);
     }
   };
   return {
@@ -444,6 +435,18 @@ var isPlainObject = function(value10) {
   return (prototype === null || prototype === Object.prototype || Object.getPrototypeOf(prototype) === null) && !(Symbol.toStringTag in value10) && !(Symbol.iterator in value10);
 };
 
+// src/reactive/store.ts
+function store(value10) {
+  const original = reactiveObject(value10);
+  const instance = Object.create({
+    ...original.callbacks
+  });
+  Object.defineProperty(instance, "$sentinel", {
+    value: "store"
+  });
+  return instance;
+}
+
 // src/reactive/index.ts
 function reactive(value10) {
   if (isReactive(value10)) {
@@ -452,10 +455,11 @@ function reactive(value10) {
   switch (true) {
     case Array.isArray(value10):
       return array(value10);
+    case isPlainObject(value10):
+      return store(value10);
     case typeof value10 === "function":
       return computed(value10);
     case value10 == null:
-    case isPlainObject(value10):
     case primitives.has(typeof value10):
       return signal(value10);
     default:
@@ -463,19 +467,6 @@ function reactive(value10) {
   }
 }
 var primitives = new Set(["boolean", "number", "string"]);
-// src/reactive/store.ts
-function store(value10) {
-  const original = reactiveObject(value10);
-  const instance = Object.create({
-    ...original.callbacks
-  });
-  Object.defineProperty(instance, "$sentinel", {
-    get() {
-      return "store";
-    }
-  });
-  return instance;
-}
 export {
   store,
   signal,

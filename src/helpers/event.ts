@@ -6,17 +6,13 @@ export function disable<Value>(state: ReactiveState<Value>): void {
 	if (state.active) {
 		state.active = false;
 
-		for (const callback of state.callbacks.any) {
-			if (typeof callback !== 'function') {
-				callback.reactives.delete(state as never);
-			}
-		}
+		const effects = [...state.callbacks.any, ...state.callbacks.values.values()]
+			.flatMap(value => (value instanceof Set ? [...value.values()] : value))
+			.filter(value => typeof value !== 'function');
 
-		for (const [, callback] of state.callbacks.values) {
-			for (const value of callback) {
-				if (typeof value !== 'function') {
-					value.reactives.delete(state as never);
-				}
+		for (const fx of effects) {
+			if (typeof fx !== 'function') {
+				fx.reactives.delete(state as never);
 			}
 		}
 	}
@@ -24,25 +20,20 @@ export function disable<Value>(state: ReactiveState<Value>): void {
 
 export function emit<Value>(state: ReactiveState<Value>, keys?: Key[]): void {
 	if (state.active) {
-		const keyed = [];
+		const subscribers = [
+			...state.callbacks.any,
+			...[...state.callbacks.values.entries()]
+				.filter(([key]) => keys == null || keys.includes(key))
+				.map(([, value]) => value),
+		]
+			.flatMap(value => (value instanceof Set ? [...value.values()] : value))
+			.map(value => (typeof value === 'function' ? value : value.callback));
 
-		for (const [key, value] of state.callbacks.values) {
-			if (keys == null || keys.includes(key)) {
-				keyed.push(...value);
-			}
-		}
-
-		const callbacks = [...state.callbacks.any, ...keyed].map(value =>
-			typeof value === 'function' ? value : value.callback,
-		);
-
-		for (const callback of callbacks) {
-			if (typeof callback === 'function') {
+		for (const subsriber of subscribers) {
+			if (typeof subsriber === 'function') {
 				queue(() => {
-					callback(state.value);
+					subsriber(state.value);
 				});
-			} else {
-				queue(callback);
 			}
 		}
 	}

@@ -4,8 +4,8 @@ import type {
 	Effect,
 	Reactive,
 	ReactiveArray,
-	ReactiveStore,
 	Signal,
+	Store,
 } from '../models';
 
 /**
@@ -45,7 +45,7 @@ function isSentinel(value: unknown, expression: RegExp): boolean {
 /**
  * Is the value a reactive store?
  */
-export function isStore(value: unknown): value is ReactiveStore<PlainObject> {
+export function isStore(value: unknown): value is Store<PlainObject> {
 	return isSentinel(value, /^store$/i);
 }
 

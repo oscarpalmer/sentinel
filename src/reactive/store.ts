@@ -1,10 +1,8 @@
 import type {PlainObject} from '@oscarpalmer/atoms/models';
 import {reactiveObject} from './object';
-import type {ReactiveStore} from '../models';
+import type {Store} from '../models';
 
-export function store<Value extends PlainObject>(
-	value: Value,
-): ReactiveStore<Value> {
+export function store<Value extends PlainObject>(value: Value): Store<Value> {
 	const original = reactiveObject(value);
 
 	const instance = Object.create({
@@ -12,9 +10,7 @@ export function store<Value extends PlainObject>(
 	});
 
 	Object.defineProperty(instance, '$sentinel', {
-		get() {
-			return 'store';
-		},
+		value: 'store',
 	});
 
 	return instance;

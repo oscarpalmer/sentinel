@@ -1,8 +1,12 @@
-import type {ArrayOrPlainObject, PlainObject} from '@oscarpalmer/atoms/models';
+import type {
+	ArrayOrPlainObject,
+	Key,
+	PlainObject,
+} from '@oscarpalmer/atoms/models';
 import {getProxyValue, setProxyValue} from '../helpers/proxy';
 import {subscribe, unsubscribe} from '../helpers/subscription';
 import {getValue} from '../helpers/value';
-import type {ReactiveState, Signal} from '../models';
+import type {ReactiveState, Signal, Subscriber, Unsubscriber} from '../models';
 import {signal} from './signal';
 import {reactiveValue} from './value';
 
@@ -32,6 +36,25 @@ function setStoreValue(
 	if (typeof first !== 'object' && first !== null) {
 		state.value[first as never] = second as never;
 	}
+}
+
+function subscribeOrUnsubscribe(
+	state: ReactiveState<unknown[] | PlainObject>,
+	callback: (
+		state: ReactiveState<unknown[] | PlainObject>,
+		subscriber: Subscriber<unknown>,
+		key?: Key,
+	) => unknown,
+	first: unknown,
+	second: unknown,
+): unknown {
+	const firstIsSubscriber = typeof first === 'function';
+
+	return callback(
+		state,
+		(firstIsSubscriber ? first : second) as never,
+		(firstIsSubscriber ? undefined : first) as never,
+	);
 }
 
 export function reactiveObject<Value extends ArrayOrPlainObject>(
@@ -72,22 +95,10 @@ export function reactiveObject<Value extends ArrayOrPlainObject>(
 			setStoreValue(original.state as never, first, second);
 		},
 		subscribe(first: unknown, second: unknown) {
-			const firstIsSubscriber = typeof first === 'function';
-
-			return subscribe(
-				original.state,
-				(firstIsSubscriber ? first : second) as never,
-				(firstIsSubscriber ? undefined : first) as never,
-			);
+			return subscribeOrUnsubscribe(original.state, subscribe, first, second);
 		},
 		unsubscribe(first: unknown, second: unknown) {
-			const firstIsSubscriber = typeof first === 'function';
-
-			return unsubscribe(
-				original.state,
-				(firstIsSubscriber ? first : second) as never,
-				(firstIsSubscriber ? undefined : first) as never,
-			);
+			subscribeOrUnsubscribe(original.state, unsubscribe, first, second);
 		},
 	};
 

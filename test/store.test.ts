@@ -6,6 +6,7 @@ test('store', done => {
 	const stored = store({key: 'value'});
 
 	let emitted = 0;
+	let subscribed = 0;
 
 	effect(() => {
 		stored.get('key');
@@ -13,7 +14,17 @@ test('store', done => {
 		emitted += 1;
 	});
 
+	stored.subscribe('key', () => {
+		subscribed += 1;
+	});
+
+	stored.subscribe('key', () => {
+		subscribed += 1;
+	});
+
 	expect(emitted).toBe(1);
+	expect(subscribed).toBe(2);
+
 	expect(stored.peek()).toEqual({key: 'value'});
 	expect(stored.peek('key')).toBe('value');
 
@@ -21,6 +32,7 @@ test('store', done => {
 
 	wait(() => {
 		expect(emitted).toBe(2);
+		expect(subscribed).toBe(4);
 
 		stored.set('key', 'newValue');
 

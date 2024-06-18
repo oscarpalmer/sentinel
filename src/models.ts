@@ -127,7 +127,7 @@ export type ReactiveState<Value> = {
 	value: Value;
 };
 
-export type ReactiveStore<Value> = {
+export type Store<Value> = {
 	/**
 	 * Gets the store
 	 */

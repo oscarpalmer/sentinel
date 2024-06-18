@@ -1,3 +1,3 @@
 import type { PlainObject } from '@oscarpalmer/atoms/models';
-import type { ReactiveStore } from '../models';
-export declare function store<Value extends PlainObject>(value: Value): ReactiveStore<Value>;
+import type { Store } from '../models';
+export declare function store<Value extends PlainObject>(value: Value): Store<Value>;

@@ -18,31 +18,24 @@ export function reactiveValue<Value>(value: Value) {
 		get(): Value {
 			return getValue(state);
 		},
-
 		peek(): Value {
 			return state.value;
 		},
-
 		toJSON(): Value {
 			return getValue(state);
 		},
-
 		toString(): string {
 			return String(getValue(state));
 		},
-
 		run(): void {
 			enable(state);
 		},
-
 		stop(): void {
 			disable(state);
 		},
-
 		subscribe(subscriber: Subscriber<Value>): Unsubscriber {
 			return subscribe(state, subscriber);
 		},
-
 		unsubscribe(subscriber?: Subscriber<Value>): void {
 			if (subscriber == null) {
 				state.callbacks.any.clear();

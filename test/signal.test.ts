@@ -66,8 +66,11 @@ test('subscribed', done => {
 	let value: unknown = undefined;
 
 	const unsub = sig.subscribe(subscriber);
+	const noop = sig.subscribe(subscriber);
 
 	expect(value).toBe('signal');
+
+	expect(noop.toString()).toMatch(/\s*\(\)\s*=>\s*\{\s*\}\s*/);
 
 	sig.stop();
 	sig.stop();
