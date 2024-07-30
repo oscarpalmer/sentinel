@@ -1,16 +1,17 @@
 // node_modules/@oscarpalmer/atoms/dist/js/queue.mjs
-var queue = function(callback) {
+function queue(callback) {
   _atomic_queued.add(callback);
   if (_atomic_queued.size > 0) {
     queueMicrotask(() => {
-      const callbacks = Array.from(_atomic_queued);
+      const callbacks = [..._atomic_queued];
+      const { length } = callbacks;
       _atomic_queued.clear();
-      for (const callback2 of callbacks) {
-        callback2();
+      for (let index = 0;index < length; index += 1) {
+        callbacks[index]();
       }
     });
   }
-};
+}
 if (globalThis._atomic_queued == null) {
   const queued = new Set;
   Object.defineProperty(globalThis, "_atomic_queued", {
@@ -32,41 +33,7 @@ if (globalThis._sentinels == null) {
 
 // src/effect.ts
 function effect(callback) {
-  const state = {
-    callback,
-    active: false,
-    reactives: new Set
-  };
-  const instance = Object.create({
-    start() {
-      if (!state.active) {
-        state.active = true;
-        const index = globalThis._sentinels.push(state) - 1;
-        state.callback();
-        globalThis._sentinels.splice(index, 1);
-      }
-    },
-    stop() {
-      if (state.active) {
-        state.active = false;
-        for (const reactive of state.reactives) {
-          reactive.callbacks.any.delete(state);
-          for (const [key, keyed] of reactive.callbacks.values) {
-            keyed.delete(state);
-            if (keyed.size === 0) {
-              reactive.callbacks.keys.delete(key);
-            }
-          }
-        }
-        state.reactives.clear();
-      }
-    }
-  });
-  Object.defineProperty(instance, "$sentinel", {
-    value: "effect"
-  });
-  instance.start();
-  return instance;
+  return new Effect(callback);
 }
 function watch(reactive, key) {
   const effect2 = globalThis._sentinels[globalThis._sentinels.length - 1];
@@ -83,6 +50,42 @@ function watch(reactive, key) {
     effect2.reactives.add(reactive);
   }
 }
+
+class Effect {
+  $sentinel = "effect";
+  state;
+  constructor(callback) {
+    this.state = {
+      callback,
+      active: false,
+      reactives: new Set
+    };
+    this.start();
+  }
+  start() {
+    if (!this.state.active) {
+      this.state.active = true;
+      const index = globalThis._sentinels.push(this.state) - 1;
+      this.state.callback();
+      globalThis._sentinels.splice(index, 1);
+    }
+  }
+  stop() {
+    if (this.state.active) {
+      this.state.active = false;
+      for (const reactive of this.state.reactives) {
+        reactive.callbacks.any.delete(this.state);
+        for (const [key, keyed] of reactive.callbacks.values) {
+          keyed.delete(this.state);
+          if (keyed.size === 0) {
+            reactive.callbacks.keys.delete(key);
+          }
+        }
+      }
+      this.state.reactives.clear();
+    }
+  }
+}
 // src/helpers/is.ts
 function isArray(value) {
   return isSentinel(value, /^array$/i);
@@ -96,15 +99,65 @@ function isEffect(value) {
 function isReactive(value) {
   return isSentinel(value, /^array|computed|signal|store$/i);
 }
-var isSentinel = function(value, expression) {
+function isSentinel(value, expression) {
   return expression.test(value?.$sentinel ?? "");
-};
+}
 function isStore(value) {
   return isSentinel(value, /^store$/i);
 }
 function isSignal(value) {
   return isSentinel(value, /^signal$/i);
 }
+// node_modules/@oscarpalmer/atoms/dist/js/function.mjs
+function noop() {
+}
+
+// src/helpers/subscription.ts
+function subscribe(state, subscriber, key) {
+  let set;
+  if (key != null) {
+    if (state.callbacks.keys.has(key)) {
+      set = state.callbacks.values.get(key);
+    } else {
+      set = new Set;
+      state.callbacks.keys.add(key);
+      state.callbacks.values.set(key, set);
+    }
+  } else {
+    set = state.callbacks.any;
+  }
+  if (set == null || set.has(subscriber)) {
+    return noop;
+  }
+  set.add(subscriber);
+  subscriber(state.value);
+  return () => {
+    unsubscribe(state, subscriber, key);
+  };
+}
+function subscribeOrUnsubscribe(type, state, first, second) {
+  const firstIsSubscriber = typeof first === "function";
+  return (type === "subscribe" ? subscribe : unsubscribe)(state, firstIsSubscriber ? first : second, firstIsSubscriber ? undefined : first);
+}
+function unsubscribe(state, subscriber, key) {
+  if (key != null) {
+    const set = state.callbacks.values.get(key);
+    if (set != null) {
+      if (subscriber == null) {
+        set.clear();
+      } else {
+        set.delete(subscriber);
+      }
+      if (set.size === 0) {
+        state.callbacks.keys.delete(key);
+        state.callbacks.values.delete(key);
+      }
+    }
+  } else if (subscriber != null) {
+    state.callbacks.any.delete(subscriber);
+  }
+}
+
 // src/helpers/event.ts
 function disable(state) {
   if (state.active) {
@@ -180,113 +233,72 @@ var arrayOperations = new Set([
   "unshift"
 ]);
 
-// src/helpers/subscription.ts
-function subscribe(state, subscriber, key) {
-  let set;
-  if (key != null) {
-    if (state.callbacks.keys.has(key)) {
-      set = state.callbacks.values.get(key);
-    } else {
-      set = new Set;
-      state.callbacks.keys.add(key);
-      state.callbacks.values.set(key, set);
-    }
-  } else {
-    set = state.callbacks.any;
-  }
-  if (set == null || set.has(subscriber)) {
-    return () => {
+// src/reactive/instance.ts
+class ReactiveInstance {
+  state;
+  constructor(type, value2) {
+    this.$sentinel = type;
+    this.state = {
+      value: value2,
+      active: true,
+      callbacks: {
+        any: new Set,
+        keys: new Set,
+        values: new Map
+      }
     };
   }
-  set.add(subscriber);
-  subscriber(state.value);
-  return () => {
-    unsubscribe(state, subscriber, key);
-  };
-}
-function unsubscribe(state, subscriber, key) {
-  if (key != null) {
-    const set = state.callbacks.values.get(key);
-    if (set != null) {
-      if (subscriber == null) {
-        set.clear();
-      } else {
-        set.delete(subscriber);
-      }
-      if (set.size === 0) {
-        state.callbacks.keys.delete(key);
-        state.callbacks.values.delete(key);
-      }
-    }
-  } else if (subscriber != null) {
-    state.callbacks.any.delete(subscriber);
+  get() {
+    return getValue(this.state);
+  }
+  peek() {
+    return this.state.value;
+  }
+  run() {
+    enable(this.state);
+  }
+  stop() {
+    disable(this.state);
+  }
+  toJSON() {
+    return getValue(this.state);
+  }
+  toString() {
+    return String(getValue(this.state));
   }
 }
 
 // src/reactive/value.ts
-function reactiveValue(value2) {
-  const state = {
-    value: value2,
-    active: true,
-    callbacks: {
-      any: new Set,
-      keys: new Set,
-      values: new Map
+class ReactiveValue extends ReactiveInstance {
+  subscribe(subscriber) {
+    return subscribe(this.state, subscriber);
+  }
+  unsubscribe(subscriber) {
+    if (subscriber == null) {
+      this.state.callbacks.any.clear();
+    } else {
+      this.state.callbacks.any.delete(subscriber);
     }
-  };
-  const callbacks = {
-    get() {
-      return getValue(state);
-    },
-    peek() {
-      return state.value;
-    },
-    toJSON() {
-      return getValue(state);
-    },
-    toString() {
-      return String(getValue(state));
-    },
-    run() {
-      enable(state);
-    },
-    stop() {
-      disable(state);
-    },
-    subscribe(subscriber) {
-      return subscribe(state, subscriber);
-    },
-    unsubscribe(subscriber) {
-      if (subscriber == null) {
-        state.callbacks.any.clear();
-      } else {
-        state.callbacks.any.delete(subscriber);
-      }
-    }
-  };
-  return {
-    callbacks,
-    state
-  };
+  }
 }
 
 // src/reactive/computed.ts
 function computed(value4) {
-  const original = reactiveValue(undefined);
-  const fx = effect(() => setValue(original.state, value4()));
-  const instance = Object.create({
-    ...original.callbacks,
-    run() {
-      fx.start();
-    },
-    stop() {
-      fx.stop();
-    }
-  });
-  Object.defineProperty(instance, "$sentinel", {
-    value: "computed"
-  });
-  return instance;
+  return new Computed(value4);
+}
+
+class Computed extends ReactiveValue {
+  fx;
+  constructor(value4) {
+    super("computed", undefined);
+    this.fx = effect(() => setValue(this.state, value4()));
+  }
+  run() {
+    this.fx.start();
+  }
+  stop() {
+    this.fx.stop();
+  }
 }
 
 // src/helpers/proxy.ts
@@ -309,161 +321,142 @@ function setProxyValue(reactive, target, property, value5, length) {
   return result;
 }
 
-// src/reactive/signal.ts
-function signal(value7) {
-  const original = reactiveValue(value7);
-  function set(value8) {
-    setValue(original.state, value8);
+// src/reactive/object.ts
+class ReactiveObject extends ReactiveInstance {
+  constructor(type, value5, length) {
+    super(type, value5);
+    this.state.value = new Proxy(value5, {
+      get: (target, key) => getProxyValue(this.state, target, key, length),
+      set: (target, key, value6) => {
+        return setProxyValue(this.state, target, key, value6, length);
+      }
+    });
   }
-  function update(updater) {
-    setValue(original.state, updater(original.state.value));
-  }
-  const instance = Object.create({
-    ...original.callbacks,
-    set,
-    update
-  });
-  Object.defineProperty(instance, "$sentinel", {
-    value: "signal"
-  });
-  return instance;
 }
 
-// src/reactive/object.ts
-var setArrayValue = function(state, first, second) {
-  if (Array.isArray(first)) {
-    return state.value.splice(0, state.value.length, ...first);
+// src/reactive/signal.ts
+function signal(value7) {
+  return new Signal(value7);
+}
+
+class Signal extends ReactiveValue {
+  constructor(value7) {
+    super("signal", value7);
   }
-  state.value[first] = second;
-};
-var setStoreValue = function(state, first, second) {
-  if (typeof first !== "object" && first !== null) {
-    state.value[first] = second;
+  set(value7) {
+    setValue(this.state, value7);
   }
-};
-var subscribeOrUnsubscribe = function(state, callback, first, second) {
-  const firstIsSubscriber = typeof first === "function";
-  return callback(state, firstIsSubscriber ? first : second, firstIsSubscriber ? undefined : first);
-};
-function reactiveObject(value9) {
-  const isArray2 = Array.isArray(value9);
-  const length = isArray2 ? signal(value9.length) : undefined;
-  const original = reactiveValue(isArray2 ? [] : {});
-  original.state.value = new Proxy(value9, {
-    get: (target, key) => getProxyValue(original.state, target, key, length),
-    set: (target, key, value10) => {
-      return setProxyValue(original.state, target, key, value10, length);
-    }
-  });
-  const callbacks = {
-    ...original.callbacks,
-    get(property) {
-      return getValue(original.state, property);
-    },
-    peek(property) {
-      if (property == null) {
-        return isArray2 ? [...original.state.value] : { ...original.state.value };
-      }
-      return isArray2 ? original.state.value.at(property) : original.state.value[property];
-    },
-    set(first, second) {
-      if (isArray2) {
-        return setArrayValue(original.state, first, second);
-      }
-      setStoreValue(original.state, first, second);
-    },
-    subscribe(first, second) {
-      return subscribeOrUnsubscribe(original.state, subscribe, first, second);
-    },
-    unsubscribe(first, second) {
-      subscribeOrUnsubscribe(original.state, unsubscribe, first, second);
-    }
-  };
-  return {
-    callbacks,
-    length,
-    state: original.state
-  };
+  update(updater) {
+    setValue(this.state, updater(this.state.value));
+  }
 }
 
 // src/reactive/array.ts
-function array(value10) {
-  const original = reactiveObject(value10);
-  const instance = Object.create({
-    ...original.callbacks,
-    filter(callbackFn) {
-      return computed(() => getValue(original.state).filter(callbackFn));
-    },
-    insert(index, ...value11) {
-      original.state.value.splice(index, 0, ...value11);
-      return original.length?.peek();
-    },
-    map(callbackfn) {
-      return computed(() => getValue(original.state).map(callbackfn));
-    },
-    push(...values) {
-      return original.state.value.push(...values);
-    },
-    splice(start, deleteCount, ...values) {
-      return original.state.value.splice(start, deleteCount ?? 0, ...values);
-    },
-    toArray() {
-      return original.state.value.slice();
+function array(value8) {
+  return new ReactiveArray(value8, signal(value8.length));
+}
+
+class ReactiveArray extends ReactiveObject {
+  arrayLength;
+  get length() {
+    return this.arrayLength.get();
+  }
+  set length(value8) {
+    this.state.value.length = value8 < 0 ? 0 : value8;
+  }
+  constructor(value8, arrayLength) {
+    super("array", value8, arrayLength);
+    this.arrayLength = arrayLength;
+  }
+  filter(callbackFn) {
+    return computed(() => getValue(this.state).filter(callbackFn));
+  }
+  get(index) {
+    return getValue(this.state, index);
+  }
+  insert(index, ...value8) {
+    this.state.value.splice(index, 0, ...value8);
+    return this.arrayLength?.peek();
+  }
+  map(callbackfn) {
+    return computed(() => getValue(this.state).map(callbackfn));
+  }
+  peek(index) {
+    return index == null ? [...this.state.value] : this.state.value.at(index);
+  }
+  push(...values) {
+    return this.state.value.push(...values);
+  }
+  set(first, second) {
+    if (Array.isArray(first)) {
+      return this.state.value.splice(0, this.state.value.length, ...first);
     }
-  });
-  Object.defineProperties(instance, {
-    $sentinel: {
-      value: "array"
-    },
-    length: {
-      get() {
-        return original.length?.get();
-      },
-      set(value11) {
-        original.state.value.length = value11 < 0 ? 0 : value11;
-      }
-    }
-  });
-  return instance;
+    this.state.value[first] = second;
+  }
+  splice(start, deleteCount, ...values) {
+    return this.state.value.splice(start, deleteCount ?? 0, ...values);
+  }
+  subscribe(first, second) {
+    return subscribeOrUnsubscribe("subscribe", this.state, first, second);
+  }
+  toArray() {
+    return [...this.state.value];
+  }
+  unsubscribe(first, second) {
+    subscribeOrUnsubscribe("unsubscribe", this.state, first, second);
+  }
 }
 // node_modules/@oscarpalmer/atoms/dist/js/is.mjs
-var isPlainObject = function(value10) {
-  if (typeof value10 !== "object" || value10 === null) {
+function isPlainObject(value9) {
+  if (typeof value9 !== "object" || value9 === null) {
     return false;
   }
-  const prototype = Object.getPrototypeOf(value10);
-  return (prototype === null || prototype === Object.prototype || Object.getPrototypeOf(prototype) === null) && !(Symbol.toStringTag in value10) && !(Symbol.iterator in value10);
-};
+  const prototype = Object.getPrototypeOf(value9);
+  return (prototype === null || prototype === Object.prototype || Object.getPrototypeOf(prototype) === null) && !(Symbol.toStringTag in value9) && !(Symbol.iterator in value9);
+}
 
 // src/reactive/store.ts
-function store(value10) {
-  const original = reactiveObject(value10);
-  const instance = Object.create({
-    ...original.callbacks
-  });
-  Object.defineProperty(instance, "$sentinel", {
-    value: "store"
-  });
-  return instance;
+function store(value9) {
+  return new Store(value9);
+}
+
+class Store extends ReactiveObject {
+  constructor(value9) {
+    super("store", value9);
+  }
+  peek(key) {
+    return key == null ? { ...this.state.value } : this.state.value[key];
+  }
+  set(first, second) {
+    if (typeof first !== "object" && first !== null) {
+      this.state.value[first] = second;
+    }
+  }
+  subscribe(first, second) {
+    return subscribeOrUnsubscribe("subscribe", this.state, first, second);
+  }
+  unsubscribe(first, second) {
+    subscribeOrUnsubscribe("unsubscribe", this.state, first, second);
+  }
 }
 
 // src/reactive/index.ts
-function reactive(value10) {
-  if (isReactive(value10)) {
-    return value10;
+function reactive(value9) {
+  if (isReactive(value9)) {
+    return value9;
   }
   switch (true) {
-    case Array.isArray(value10):
-      return array(value10);
-    case isPlainObject(value10):
-      return store(value10);
-    case typeof value10 === "function":
-      return computed(value10);
-    case value10 == null:
-    case primitives.has(typeof value10):
-      return signal(value10);
+    case Array.isArray(value9):
+      return array(value9);
+    case isPlainObject(value9):
+      return store(value9);
+    case typeof value9 === "function":
+      return computed(value9);
+    case value9 == null:
+    case primitives.has(typeof value9):
+      return signal(value9);
     default:
-      return value10;
+      return value9;
   }
 }
 var primitives = new Set(["boolean", "number", "string"]);

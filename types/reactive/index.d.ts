@@ -1,5 +1,8 @@
 import type { PlainObject } from '@oscarpalmer/atoms';
-import type { Computed, ReactiveArray, Signal, Store } from '../models';
+import { type ReactiveArray } from './array';
+import { type Computed } from './computed';
+import { type Signal } from './signal';
+import { type Store } from './store';
 /**
  * Creates a reactive array
  */

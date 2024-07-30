@@ -1,11 +1,10 @@
 import type {PlainObject} from '@oscarpalmer/atoms';
 import {isPlainObject} from '@oscarpalmer/atoms/is';
 import {isReactive} from '../helpers/is';
-import type {Computed, ReactiveArray, Signal, Store} from '../models';
-import {array} from './array';
-import {computed} from './computed';
-import {signal} from './signal';
-import {store} from './store';
+import {type ReactiveArray, array} from './array';
+import {type Computed, computed} from './computed';
+import {type Signal, signal} from './signal';
+import {type Store, store} from './store';
 
 const primitives = new Set(['boolean', 'number', 'string']);
 

@@ -70,7 +70,7 @@ test('subscribed', done => {
 
 	expect(value).toBe('signal');
 
-	expect(noop.toString()).toMatch(/\s*\(\)\s*=>\s*\{\s*\}\s*/);
+	expect(noop.toString()).toBe('function noop() {\n}');
 
 	sig.stop();
 	sig.stop();

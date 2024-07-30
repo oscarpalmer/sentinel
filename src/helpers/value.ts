@@ -1,5 +1,6 @@
 import {watch} from '../effect';
-import type {ReactiveState, Signal} from '../models';
+import type {ReactiveState} from '../models';
+import type {Signal} from '../reactive/signal';
 import {emit} from './event';
 
 export const arrayOperations = new Set([

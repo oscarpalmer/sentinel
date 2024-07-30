@@ -1,29 +1,37 @@
-import {effect} from '../effect';
+import {type Effect, effect} from '../effect';
 import {setValue} from '../helpers/value';
-import type {Computed} from '../models';
-import {reactiveValue} from './value';
+import {ReactiveValue} from './value';
+
+/**
+ * A computed, reactive value
+ */
+export class Computed<Value> extends ReactiveValue<Value> {
+	private readonly fx: Effect;
+
+	constructor(value: () => Value) {
+		super('computed', undefined as never);
+
+		this.fx = effect(() => setValue(this.state, value()));
+	}
+
+	/**
+	 * @inheritdoc
+	 */
+	run(): void {
+		this.fx.start();
+	}
+
+	/**
+	 * @inheritdoc
+	 */
+	stop(): void {
+		this.fx.stop();
+	}
+}
 
 /**
  * Creates a computed, reactive value
  */
 export function computed<Value>(value: () => Value): Computed<Value> {
-	const original = reactiveValue<Value>(undefined as never);
-
-	const fx = effect(() => setValue(original.state, value()));
-
-	const instance = Object.create({
-		...original.callbacks,
-		run(): void {
-			fx.start();
-		},
-		stop(): void {
-			fx.stop();
-		},
-	});
-
-	Object.defineProperty(instance, '$sentinel', {
-		value: 'computed',
-	});
-
-	return instance;
+	return new Computed(value);
 }

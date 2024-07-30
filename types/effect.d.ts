@@ -1,5 +1,21 @@
 import type { Key } from '@oscarpalmer/atoms/models';
-import type { Effect, ReactiveState } from './models';
+import type { ReactiveState } from './models';
+/**
+ * A reactive effect for changes in a value
+ */
+export declare class Effect {
+    private readonly $sentinel;
+    private readonly state;
+    constructor(callback: () => void);
+    /**
+     * Starts reacting to changes
+     */
+    start(): void;
+    /**
+     * Stops reacting to changes
+     */
+    stop(): void;
+}
 /**
  * Creates a reactive effect
  */

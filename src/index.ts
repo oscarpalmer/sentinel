@@ -1,5 +1,5 @@
 import './global';
-export {effect} from './effect';
+export {effect, type Effect} from './effect';
 export {
 	isArray,
 	isComputed,
@@ -8,17 +8,10 @@ export {
 	isSignal,
 	isStore,
 } from './helpers/is';
-export type {
-	Computed,
-	Effect,
-	Reactive,
-	ReactiveArray,
-	Signal,
-	Store,
-} from './models';
-export {array} from './reactive/array';
-export {computed} from './reactive/computed';
+export {array, type ReactiveArray} from './reactive/array';
+export {computed, type Computed} from './reactive/computed';
 export {reactive} from './reactive/index';
-export {signal} from './reactive/signal';
-export {store} from './reactive/store';
+export type {Reactive} from './reactive/instance';
+export {signal, type Signal} from './reactive/signal';
+export {store, type Store} from './reactive/store';
 

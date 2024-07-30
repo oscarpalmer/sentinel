@@ -1,5 +1,10 @@
 import type { PlainObject } from '@oscarpalmer/atoms';
-import type { Computed, Effect, Reactive, ReactiveArray, Signal, Store } from '../models';
+import type { Effect } from '../effect';
+import type { ReactiveArray } from '../reactive/array';
+import type { Computed } from '../reactive/computed';
+import type { Reactive } from '../reactive/instance';
+import type { Signal } from '../reactive/signal';
+import type { Store } from '../reactive/store';
 /**
  * Is the value a reactive array?
  */

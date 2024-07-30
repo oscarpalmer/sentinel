@@ -1,57 +1,67 @@
 import type {Key} from '@oscarpalmer/atoms/models';
-import type {Effect, EffectState, ReactiveState} from './models';
+import type {EffectState, ReactiveState} from './models';
+
+/**
+ * A reactive effect for changes in a value
+ */
+export class Effect {
+	private readonly $sentinel = 'effect';
+	private readonly state: EffectState;
+
+	constructor(callback: () => void) {
+		this.state = {
+			callback,
+			active: false,
+			reactives: new Set(),
+		};
+
+		this.start();
+	}
+
+	/**
+	 * Starts reacting to changes
+	 */
+	start(): void {
+		if (!this.state.active) {
+			this.state.active = true;
+
+			const index = globalThis._sentinels.push(this.state) - 1;
+
+			this.state.callback();
+
+			globalThis._sentinels.splice(index, 1);
+		}
+	}
+
+	/**
+	 * Stops reacting to changes
+	 */
+	stop(): void {
+		if (this.state.active) {
+			this.state.active = false;
+
+			for (const reactive of this.state.reactives) {
+				reactive.callbacks.any.delete(this.state);
+
+				for (const [key, keyed] of reactive.callbacks.values) {
+					keyed.delete(this.state);
+
+					if (keyed.size === 0) {
+						reactive.callbacks.keys.delete(key);
+					}
+				}
+			}
+
+			this.state.reactives.clear();
+		}
+	}
+}
 
 /**
  * Creates a reactive effect
  */
 export function effect(callback: () => void): Effect {
-	const state: EffectState = {
-		callback,
-		active: false,
-		reactives: new Set(),
-	};
-
-	const instance = Object.create({
-		start(): void {
-			if (!state.active) {
-				state.active = true;
-
-				const index = globalThis._sentinels.push(state) - 1;
-
-				state.callback();
-
-				globalThis._sentinels.splice(index, 1);
-			}
-		},
-
-		stop(): void {
-			if (state.active) {
-				state.active = false;
-
-				for (const reactive of state.reactives) {
-					reactive.callbacks.any.delete(state);
-
-					for (const [key, keyed] of reactive.callbacks.values) {
-						keyed.delete(state);
-
-						if (keyed.size === 0) {
-							reactive.callbacks.keys.delete(key);
-						}
-					}
-				}
-
-				state.reactives.clear();
-			}
-		},
-	});
-
-	Object.defineProperty(instance, '$sentinel', {
-		value: 'effect',
-	});
-
-	instance.start();
-
-	return instance;
+	return new Effect(callback);
 }
 
 export function watch<Value>(reactive: ReactiveState<Value>, key?: Key): void {

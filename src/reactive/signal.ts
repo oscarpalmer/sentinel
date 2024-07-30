@@ -1,30 +1,29 @@
 import {setValue} from '../helpers/value';
-import type {Signal} from '../models';
-import {reactiveValue} from './value';
+import {ReactiveValue} from './value';
+
+export class Signal<Value> extends ReactiveValue<Value> {
+	constructor(value: Value) {
+		super('signal', value);
+	}
+
+	/**
+	 * Sets the value
+	 */
+	set(value: Value): void {
+		setValue(this.state, value);
+	}
+
+	/**
+	 * Updates the value
+	 */
+	update(updater: (current: Value) => Value): void {
+		setValue(this.state, updater(this.state.value as never));
+	}
+}
 
 /**
  * Creates a reactive value
  */
 export function signal<Value>(value: Value): Signal<Value> {
-	const original = reactiveValue(value);
-
-	function set(value: Value): void {
-		setValue(original.state, value);
-	}
-
-	function update(updater: (current: Value) => Value): void {
-		setValue(original.state, updater(original.state.value as never));
-	}
-
-	const instance = Object.create({
-		...original.callbacks,
-		set,
-		update,
-	});
-
-	Object.defineProperty(instance, '$sentinel', {
-		value: 'signal',
-	});
-
-	return instance;
+	return new Signal(value);
 }

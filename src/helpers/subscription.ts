@@ -1,3 +1,4 @@
+import {noop} from '@oscarpalmer/atoms/function';
 import type {Key} from '@oscarpalmer/atoms/models';
 import type {
 	EffectState,
@@ -27,7 +28,7 @@ export function subscribe<Value>(
 	}
 
 	if (set == null || set.has(subscriber)) {
-		return () => {};
+		return noop;
 	}
 
 	set.add(subscriber);
@@ -37,6 +38,21 @@ export function subscribe<Value>(
 	return () => {
 		unsubscribe(state, subscriber, key);
 	};
+}
+
+export function subscribeOrUnsubscribe(
+	type: 'subscribe' | 'unsubscribe',
+	state: ReactiveState<unknown>,
+	first: unknown,
+	second: unknown,
+): unknown {
+	const firstIsSubscriber = typeof first === 'function';
+
+	return (type === 'subscribe' ? subscribe : unsubscribe)(
+		state,
+		(firstIsSubscriber ? first : second) as never,
+		(firstIsSubscriber ? undefined : first) as never,
+	);
 }
 
 export function unsubscribe<Value>(

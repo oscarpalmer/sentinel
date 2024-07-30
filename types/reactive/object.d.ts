@@ -1,9 +1,6 @@
 import type { ArrayOrPlainObject } from '@oscarpalmer/atoms/models';
-import type { ReactiveState, Signal } from '../models';
-type ReactiveObject<Value> = {
-    callbacks: Record<string, unknown>;
-    length?: Signal<number>;
-    state: ReactiveState<Value>;
-};
-export declare function reactiveObject<Value extends ArrayOrPlainObject>(value: Value): ReactiveObject<Value>;
-export {};
+import { ReactiveInstance } from './instance';
+import type { Signal } from './signal';
+export declare abstract class ReactiveObject<Value extends ArrayOrPlainObject> extends ReactiveInstance<Value> {
+    constructor(type: string, value: Value, length?: Signal<number>);
+}
